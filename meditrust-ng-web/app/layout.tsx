@@ -1,15 +1,15 @@
-import './globals.css'
-import SessionSync from '@/components/SessionSync'
-import PageTransition from '@/components/PageTransition'
-import type { Metadata } from 'next'
-export const metadata: Metadata = { title: 'MediTrust — Telemedicine' }
+// app/layout.tsx or app/root-layout.tsx
+import "./globals.css";
+import PageTransition from "@/components/PageTransition";
+import SessionSync from "@/components/SessionSync";
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <body>
-        <SessionSync />
+        <SessionSync /> {/* mounted once globally */}
         <PageTransition>{children}</PageTransition>
       </body>
     </html>
-  )
+  );
 }

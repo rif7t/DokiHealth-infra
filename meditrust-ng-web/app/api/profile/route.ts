@@ -1,28 +1,79 @@
-import { NextResponse } from 'next/server'
-import { createSupabaseServer } from '@/lib/supabaseServer'
+import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
 
-export async function GET(){
-  const supabase = createSupabaseServer()
-  const user = (await supabase.auth.getUser()).data.user
-  if (!user) return NextResponse.json({ profile: null })
-  const [{ data: profile }, { data: doctor }] = await Promise.all([
-    supabase.from('profiles').select('*').eq('id', user.id).single(),
-    supabase.from('doctors_public').select('*').eq('id', user.id).single()
-  ])
-  return NextResponse.json({ profile, doctor })
+// Helper to create a Supabase client with the user's access token
+const createSupabaseServer = (accessToken?: string) => {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_PUBLISHABLE_KEY!,
+    {
+      global: {
+        headers: accessToken
+          ? { Authorization: `Bearer ${accessToken}` }
+          : undefined,
+      },
+    }
+  );
+};
+
+export async function GET(req: NextRequest) {
+  const token = req.headers.get("Authorization")?.replace("Bearer ", "");
+  if (!token)
+    return NextResponse.json({ profile: null }, { status: 401 });
+
+  const supabase = createSupabaseServer(token);
+
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  if (userError || !user)
+    return NextResponse.json({ profile: null }, { status: 401 });
+
+  const { data: profile, error: profileError } = await supabase
+    .from("profile")
+    .select("*")
+    .eq("id", user.id)
+    .single();
+
+  if (profileError)
+    return NextResponse.json({ error: profileError.message }, { status: 400 });
+
+  return NextResponse.json({ profile });
 }
 
-export async function PUT(req: Request){
-  const supabase = createSupabaseServer()
-  const user = (await supabase.auth.getUser()).data.user
-  if (!user) return NextResponse.json({ error: 'Not signed in' }, { status: 401 })
-  const { profile, isDoctor } = await req.json()
-  const { error: e1 } = await supabase.from('profiles').upsert({ id: user.id, ...profile })
-  if (e1) return NextResponse.json({ error: e1.message }, { status: 400 })
-  if (isDoctor){
-    const doc = { id: user.id, full_name: profile.full_name, specialty: profile.specialty || 'General Practice', bio: profile.bio || '', online: true }
-    const { error: e2 } = await supabase.from('doctors_public').upsert(doc)
-    if (e2) return NextResponse.json({ error: e2.message }, { status: 400 })
-  }
-  return NextResponse.json({ ok: true })
+export async function PUT(req: NextRequest) {
+  const token = req.headers.get("Authorization")?.replace("Bearer ", "");
+  if (!token)
+    return NextResponse.json({ error: "Not signed in" }, { status: 401 });
+
+  const supabase = createSupabaseServer(token);
+
+  const { data: { user }, error: userError } = await supabase.auth.getUser();
+  if (userError || !user)
+    return NextResponse.json({ error: "Not signed in" }, { status: 401 });
+
+  const { profile, isDoctor } = await req.json();
+
+  const _user = {
+    id: user.id,
+    role: isDoctor ? "doctor" : "patient",
+    title: profile.title,
+    first_name: profile.first_name,
+    last_name: profile.last_name,
+    phone_number: profile.phone_number,
+    specialty: isDoctor ? profile.specialty || "General Practice" : null,
+    verified: isDoctor,
+    is_available: isDoctor,
+    is_online: true,
+    email: profile?.email || user.email,
+  };
+
+  const { error: e2 } = await supabase
+    .from("profile")
+    .update(_user)
+    .eq("id", user.id)
+    .single();
+
+  if (e2)
+    return NextResponse.json({ error: e2.message }, { status: 400 });
+
+  return NextResponse.json({ ok: true });
 }

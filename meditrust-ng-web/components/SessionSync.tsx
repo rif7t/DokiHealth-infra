@@ -1,23 +1,24 @@
-'use client'
-import { useEffect } from 'react'
-import { supabase } from '@/lib/supabaseClient'
+// components/SessionSync.tsx
+"use client";
+import { useEffect } from "react";
+import { supabase } from "@/lib/supabaseClient";
+
+export let accessToken: string | null = null; // global token
 
 export default function SessionSync() {
   useEffect(() => {
-    const { data } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (session) {
-        try {
-          await fetch('/api/auth/set-session', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ session })
-          })
-        } catch (e) {
-          console.error('Failed to sync session to server', e)
-        }
-      }
-    })
-    return () => data.subscription.unsubscribe()
-  }, [])
-  return null
+    // Get current session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) accessToken = session.access_token;
+    });
+
+    // Listen for auth state changes
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      accessToken = session ? session.access_token : null;
+    });
+
+    return () => listener.subscription.unsubscribe();
+  }, []);
+
+  return null;
 }

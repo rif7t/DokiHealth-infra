@@ -1,4 +1,4 @@
-// File: C:\Users\user\Documents\React Projects\meditrust-ng-web\app\dashboard\patient\page.tsx
+// File: C:\Users\user\Documents\React Projects\meditrust\meditrust-ng-web\app\dashboard\patient\page.tsx
 import * as entry from '../../../../../app/dashboard/patient/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 

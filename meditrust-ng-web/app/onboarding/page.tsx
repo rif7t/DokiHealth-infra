@@ -6,9 +6,11 @@ import Cookies from "js-cookie";
 import BackgroundLayout from "@/components/BackgroundLayout";
 import { ArrowRight } from "lucide-react";
 import MobileOnly from "@/components/MobileOnly";
+import Image from "next/image";
 
 const slides = [
   {
+    image: "/onboarding1.png", // put your image in /public
     headline: (
       <>
         Your <span className="text-[#98FF98]">Trusted</span>{" "}
@@ -18,6 +20,7 @@ const slides = [
     body: "Connect with certified doctors anytime, anywhere, right from your phone.",
   },
   {
+    image: "/onboarding2.png",
     headline: (
       <>
         Quality <span className="text-[#98FF98]">Care</span>{" "}
@@ -27,6 +30,7 @@ const slides = [
     body: "Skip the waiting rooms. Get quick and reliable consultations from specialists.",
   },
   {
+    image: "/onboarding3.png",
     headline: (
       <>
         Stay <span className="text-[#98FF98]">Healthy</span>{" "}
@@ -50,23 +54,43 @@ export default function Onboarding() {
   return (
     <MobileOnly>
       <BackgroundLayout>
-        <div className="flex flex-col justify-end h-full">
+        <div className="relative flex flex-col justify-between h-full">
           {/* Slide Content */}
-          <div className="px-6 pb-28">
+          <div className="flex-1 flex flex-col justify-center items-center px-6">
             <AnimatePresence mode="wait">
               <motion.div
                 key={step}
                 initial={{ x: 150, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 exit={{ x: -150, opacity: 0 }}
-                transition={{ duration: 0.35 }}
+                transition={{ duration: 0.4 }}
+                className="flex flex-col items-center text-center space-y-6"
               >
-                <h1 className="text-3xl font-bold leading-snug text-white">
-                  {slides[step].headline}
-                </h1>
-                <p className="mt-3 text-gray-200 opacity-90">
-                  {slides[step].body}
-                </p>
+                {/* Image with slide animation */}
+                <motion.div
+                  initial={{ y: -30, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  exit={{ y: 30, opacity: 0 }}
+                  transition={{ duration: 0.4 }}
+                >
+                  <Image
+                    src={slides[step].image}
+                    alt="Onboarding Visual"
+                    width={240}
+                    height={240}
+                    className="object-contain"
+                  />
+                </motion.div>
+
+                {/* Text */}
+                <div>
+                  <h1 className="text-3xl font-bold leading-snug text-white">
+                    {slides[step].headline}
+                  </h1>
+                  <p className="mt-3 text-gray-200 opacity-90 max-w-xs mx-auto">
+                    {slides[step].body}
+                  </p>
+                </div>
               </motion.div>
             </AnimatePresence>
           </div>
