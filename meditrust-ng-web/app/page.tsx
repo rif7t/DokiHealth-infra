@@ -1,48 +1,38 @@
-'use client'
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabaseClient'
+"use client";
+import Link from "next/link";
+import MobileOnly from "@/components/MobileOnly";
+import BackgroundLayout from "@/components/BackgroundLayout";
+
 
 export default function Home() {
-  const router = useRouter()
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    const checkAuth = async () => {
-      const { data } = await supabase.auth.getSession()
-      if (!data.session) {
-        router.replace('/sign-in')
-        return
-      }
-
-      try {
-        const resp = await fetch('/api/profile')
-        const json = await resp.json()
-
-        if (!json.profile || !json.profile.full_name) {
-          router.replace('/profile')
-        } else if (json.doctor) {
-          router.replace('/dashboard/doctor')
-        } else {
-          router.replace('/dashboard/patient')
-        }
-      } catch (err) {
-        console.error('Profile check failed', err)
-        router.replace('/sign-in')
-      }
-    }
-
-    checkAuth().finally(() => setLoading(false))
-  }, [router])
-
   return (
-    <main className="h-screen w-full bg-[#111C18] flex flex-col items-center justify-center">
-      {/* Splash Branding */}
-      <div className="w-20 h-20 rounded-full bg-gradient-to-br from-brand-mint to-brand-cyan flex items-center justify-center text-black font-bold text-xl shadow-lg">
-        MT
-      </div>
-      <h1 className="mt-6 text-2xl font-semibold text-white">MediTrust</h1>
-      <p className="mt-2 text-gray-400">Loading your health partner...</p>
-    </main>
-  )
+    <MobileOnly>
+      <BackgroundLayout>
+        <main className="h-full flex flex-col justify-between items-center text-center">
+          {/* Hero Section */}
+          <div className="flex-1 flex flex-col items-center justify-center px-6">
+            <h2 className="text-3xl font-bold text-white mb-3">
+              Welcome to{" "}
+              <span className="text-[#98FF98]">Medi</span>
+              <span className="text-[#00CFC1]">Trust</span>
+            </h2>
+            <p className="text-gray-300 max-w-xs">
+              Trusted telemedicine right on your phone. Connect with doctors,
+              anytime, anywhere.
+            </p>
+          </div>
+
+          {/* Action Button */}
+          <div className="pb-16 px-6 w-full">
+            <Link
+              href="/onboarding"
+              className="block w-full py-3 rounded-lg bg-[#00CFC1] text-[#0A0F0D] font-semibold shadow-md hover:bg-[#00e6d7] transition"
+            >
+              Get Started
+            </Link>
+          </div>
+        </main>
+      </BackgroundLayout>
+    </MobileOnly>
+  );
 }

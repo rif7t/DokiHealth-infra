@@ -1,4 +1,4 @@
-// File: C:\Users\user\Documents\React Projects\meditrust-ng-web\app\api\profile\route.ts
+// File: C:\Users\user\Documents\React Projects\meditrust\meditrust-ng-web\app\api\profile\route.ts
 import * as entry from '../../../../../app/api/profile/route.js'
 import type { NextRequest } from 'next/server.js'
 
