@@ -1,7 +1,7 @@
 // app/components/PageTransition.tsx
 "use client";
 
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, easeInOut, motion } from "framer-motion";
 import { usePathname } from "next/navigation";
 
 type Props = { children: React.ReactNode };
@@ -25,7 +25,7 @@ export default function PageTransition({ children }: Props) {
           initial="initial"
           animate="animate"
           exit="exit"
-          transition={{ duration: 0.1, easeInOut: [0.25, 0.8, 0.25, 1] }}
+          transition={{ duration: 0.1, ease: easeInOut }}
         >
           {children}
         </motion.div>
