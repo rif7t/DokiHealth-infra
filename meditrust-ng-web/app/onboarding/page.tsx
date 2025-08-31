@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from "framer-motion";
 
 const slides = ["/onboarding_1.svg", "/onboarding_2.svg", "/onboarding_3.svg"];
 
+
 export default function Onboarding() {
   const [step, setStep] = useState(0);
   const router = useRouter();
@@ -19,6 +20,12 @@ export default function Onboarding() {
       localStorage.setItem("seenOnboarding", "true");
     } catch {}
     router.replace("/sign-in");
+
+     return (
+      <div className="w-full h-full">  {/* prevents height reflow */}
+        {/* page content */}
+      </div>
+    );
   };
 
   // Lock the page from scrolling
@@ -107,7 +114,7 @@ export default function Onboarding() {
                     {step === 1 &&
                       "Pay in ₦aira. Your money sits safely in escrow until care is delivered."}
                     {step === 2 &&
-                      "Scan pack codes, verify authenticity, and keep your health records all in one place."}
+                      "Scan drug codes, verify authenticity, and keep your health records all in one place."}
                   </p>
                 </div>
               </motion.div>
