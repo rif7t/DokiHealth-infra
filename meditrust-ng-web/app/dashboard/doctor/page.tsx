@@ -1,359 +1,406 @@
 "use client";
+import { useEffect, useState } from "react";
 import RequireAuth from "@/components/RequireAuth";
 import MobileOnly from "@/components/MobileOnly";
+import ModalCard from "@/components/ModalCard";
+import ConsultationSummaryCard from "@/components/consults/ConsultationSummaryCard";
+import ConsultRequestCard from "@/components/consults/ConsultRequestCard";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
 import {
-  Circle,
-  DollarSign,
+  Menu,
+  User,
   Calendar,
-  Users,
-  Bell,
-  Video,
   ClipboardList,
+  PowerIcon,
+  X,
+  Bell,
+  DollarSign,
+  Phone,
+  CreditCard,
 } from "lucide-react";
-import { useState } from "react";
-import Modal from "@/components/ModalCard";
+import { supabase } from "@/lib/supabaseClient";
+import { useRouter } from "next/navigation";
+import clsx from "clsx";
+import KPI from "@/components/ui/KPI";
+import Toggle from "@/components/ui/Toggle";
+import TextField from "@/components/ui/TextField";
+import Button from "@/components/ui/Button";
+
+const banks = [
+  "Access Bank",
+  "United Bank of Africa",
+  "Wema/Alat",
+  "Zenith Bank",
+];
 
 export default function DoctorDashboard() {
+  const router = useRouter();
+  const [profile, setDoctorProfile] = useState<any>(null);
+  const [acctProfile, setAcctProfile] = useState<any>({});
+  const [accessToken, setAccessToken] = useState<string>("");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [selectedConsult, setSelectedConsult] = useState<any>(null);
+  const [showAlerts, setShowAlerts] = useState(false);
+  const [updating, setUpdating] = useState(false);
+  const [showAccountModal, setShowAccountModal] = useState(false);
+  const [showPayouts, setShowPayouts] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session) return;
+      setAccessToken(session.access_token);
+
+      const res = await fetch("/api/profile", {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      const data = await res.json();
+      if (data?.profile) {
+        setDoctorProfile(data.profile);
+        setAcctProfile(data.profile); // ✅ sync acctProfile with profile
+      }
+    })();
+  }, []);
+
+  const doctor = {
+    name: profile ? `Dr. ${profile.first_name} ${profile.last_name}` : "",
+    specialty: profile?.specialty || "",
+  };
+
+  // Mock consultations
   const consultations = [
     {
       id: 1,
-      patientName: "John Doe",
+      patientName: "Jonathan Adio",
+      date: "Aug 28, 2025",
       time: "10:00 AM",
       reason: "Headache and fatigue",
+      doctor: doctor.name,
+      specialty: "Cardiology",
+      status: "verified",
+      diagnosis: "Migraine",
+      prescriptions: ["Paracetamol", "Rest"],
     },
     {
       id: 2,
-      patientName: "Jane Smith",
+      patientName: "Precious Adedayo",
+      date: "Aug 26, 2025",
       time: "11:30 AM",
       reason: "Follow-up on diabetes",
-    },
-    {
-      id: 3,
-      patientName: "Michael Johnson",
-      time: "1:00 PM",
-      reason: "Fever and cough",
-    },
-    {
-      id: 4,
-      patientName: "Emily Davis",
-      time: "3:15 PM",
-      reason: "Skin rash consultation",
-    },
-    {
-      id: 5,
-      patientName: "Chris Brown",
-      time: "5:00 PM",
-      reason: "General checkup",
+      doctor: doctor.name,
+      specialty: "Cardiology",
+      status: "verified",
+      diagnosis: "Hypertension",
+      prescriptions: ["Amlodipine"],
     },
   ];
 
-  const pendingRequests = [
-    { id: 101, name: "Sarah Wilson", reason: "New patient sign-up" },
+  const alerts = [
+    { id: 101, patientName: "Sarah Wilson", reason: "New patient sign-up" },
     {
       id: 102,
-      name: "David Lee",
-      reason: "Requesting diabetes management consult",
+      patientName: "David Lee",
+      reason: "Diabetes management consult",
     },
   ];
 
-  const recentPatients = [
-    { id: 201, name: "Anna Taylor", lastVisit: "Yesterday" },
-    { id: 202, name: "Mark Johnson", lastVisit: "2 days ago" },
+  const payouts = [
+    { id: 1, date: "Aug 1, 2025", amount: "₦50,000", status: "Paid" },
+    { id: 2, date: "Aug 15, 2025", amount: "₦75,000", status: "Pending" },
   ];
 
-  const patients = [
-    {
-      id: 301,
-      name: "Olivia Harris",
-      age: 34,
-      condition: "Hypertension",
-      lastVisit: "3 weeks ago",
-    },
-    {
-      id: 302,
-      name: "James Wilson",
-      age: 52,
-      condition: "Diabetes",
-      lastVisit: "1 month ago",
-    },
-    {
-      id: 303,
-      name: "Sophia Turner",
-      age: 28,
-      condition: "Asthma",
-      lastVisit: "2 months ago",
-    },
-    {
-      id: 304,
-      name: "Liam Brown",
-      age: 45,
-      condition: "Back pain",
-      lastVisit: "1 week ago",
-    },
-  ];
+  const handleUpdateAcct = async () => {
+    if (!accessToken) return;
+    setUpdating(true);
+    const updatedProfile = { ...profile, ...acctProfile };
+    let isDoctor = true;
 
-  const schedule = [
-    { id: 401, time: "09:00 AM", patient: "Emma Watson", type: "Consultation" },
-    { id: 402, time: "10:30 AM", patient: "John Doe", type: "Follow-up" },
-    { id: 403, time: "12:00 PM", patient: "Sophia Turner", type: "Checkup" },
-    { id: 404, time: "02:00 PM", patient: "Liam Brown", type: "Consultation" },
-    { id: 405, time: "04:00 PM", patient: "James Wilson", type: "Review" },
-  ];
+    console.log(accessToken);
+    console.log(updatedProfile);
+
+    const res = await fetch("/api/profile", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({ profile: updatedProfile, isDoctor }),
+    });
+
+    const data = await res.json();
+    if (data?.profile) {
+      setDoctorProfile(data.profile);
+      setAcctProfile(data.profile); // ✅ keep them in sync
+    }
+
+    console.log("Saved profile:", updatedProfile);
+    setUpdating(false);
+    return data;
+  };
 
   const [isAvailable, setIsAvailable] = useState(true);
-  const isOnline = true;
-  const [selected, setSelected] = useState<any>(null);
-  const [modal, setModal] = useState<string | null>(null);
+
+  const handleSignOut = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (!error) router.replace("/sign-in");
+  };
 
   return (
     <MobileOnly>
       <RequireAuth>
-        <main className="mobile-shell p-4 pb-32 space-y-6">
-          {/* Header */}
-          <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold text-white tracking-tight">
-              MediTrust
-            </h1>
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-1">
-                <Circle
-                  className={`w-3 h-3 ${
-                    isOnline ? "text-green-400 fill-green-400" : "text-gray-500"
-                  }`}
-                />
-                <span className="text-xs text-gray-300">
-                  {isOnline ? "Online" : "Offline"}
-                </span>
-              </div>
-              <label className="flex items-center cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={isAvailable}
-                  onChange={(e) => setIsAvailable(e.target.checked)}
-                  className="hidden"
-                />
-                <div
-                  className={`w-10 h-5 flex items-center rounded-full p-1 transition ${
-                    isAvailable ? "bg-green-500" : "bg-gray-600"
-                  }`}
-                >
-                  <div
-                    className={`bg-white w-4 h-4 rounded-full shadow-md transform transition ${
-                      isAvailable ? "translate-x-5" : ""
-                    }`}
-                  />
-                </div>
-              </label>
-              <span className="px-3 py-1 text-xs rounded-full bg-cyan-500/20 text-cyan-400 font-medium">
-                Doctor
-              </span>
+        <div className="relative flex min-h-screen bg-slate-50">
+          {/* Sidebar */}
+          <div
+            className={clsx(
+              "fixed top-0 right-0 h-full w-64 bg-white shadow-lg transform transition-transform duration-300 z-40",
+              sidebarOpen ? "translate-x-0" : "translate-x-full"
+            )}
+          >
+            <div className="flex items-center justify-between p-4 border-b border-slate-200">
+              <h2 className="text-lg font-semibold text-slate-800">Menu</h2>
+              <button onClick={() => setSidebarOpen(false)}>
+                <X size={20} className="text-slate-600 hover:text-red-500" />
+              </button>
+            </div>
+            <div className="p-6 space-y-6">
+              <button
+                onClick={() => setShowAccountModal(true)}
+                className="flex items-center gap-3 text-slate-700 hover:text-teal-600"
+              >
+                <User size={18} /> Account Details
+              </button>
+              <button
+                onClick={() => router.push("/dashboard/doctor/schedule")}
+                className="flex items-center gap-3 text-slate-700 hover:text-teal-600"
+              >
+                <ClipboardList size={18} /> Schedule
+              </button>
+              <button
+                onClick={() => setShowPayouts(true)}
+                className="flex items-center gap-3 text-slate-700 hover:text-teal-600"
+              >
+                <DollarSign size={18} /> Payouts
+              </button>
+              <button
+                onClick={handleSignOut}
+                className="flex items-center gap-3 text-red-600 hover:text-red-700"
+              >
+                <PowerIcon size={18} /> Sign Out
+              </button>
             </div>
           </div>
 
-          {/* Quick Stats */}
-          <div className="grid grid-cols-3 gap-3">
-            {[
-              { icon: Users, value: "128", label: "Patients" },
-              { icon: Calendar, value: "12", label: "Consults Today" },
-              { icon: DollarSign, value: "$450", label: "Earnings" },
-            ].map((stat, idx) => (
-              <div
-                key={idx}
-                className="bg-[#1A2622]/90 border border-gray-700 rounded-2xl p-4 text-center shadow-md hover:bg-[#1F2E2A] transition"
-              >
-                <stat.icon className="mx-auto text-cyan-400 mb-2" size={22} />
-                <p className="text-lg font-bold text-white">{stat.value}</p>
-                <p className="text-xs text-gray-400">{stat.label}</p>
-              </div>
-            ))}
-          </div>
-
-          {/* Upcoming Consultations */}
-          <section className="bg-[#1A2622]/90 border border-gray-700 rounded-2xl shadow-lg p-5">
-            <h2 className="font-semibold text-white text-lg mb-3">
-              Upcoming Consultations
-            </h2>
-            <div className="divide-y divide-gray-700">
-              {consultations.map((c) => (
-                <button
-                  key={c.id}
-                  onClick={() => setSelected(c)}
-                  className="w-full flex justify-between items-center py-3 hover:bg-gray-800/40 px-2 rounded-lg transition"
-                >
-                  <div>
-                    <p className="font-medium text-white">{c.patientName}</p>
-                    <p className="text-xs text-gray-400">{c.reason}</p>
+          {/* Main Content */}
+          <main className="flex-1 mx-auto max-w-md p-4 space-y-6">
+            {/* Header */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center">
+                  <User className="text-slate-600" size={20} />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-slate-900">
+                    {doctor.name}
+                  </p>
+                  <p className="text-xs text-slate-500">{doctor.specialty}</p>
+                  <div className="mt-1 flex items-center gap-2">
+                    <Toggle checked={isAvailable} onChange={setIsAvailable} />
+                    <span className="text-xs rounded-full bg-teal-100 text-teal-700 px-2 py-0.5">
+                      {isAvailable ? "Available" : "Away"}
+                    </span>
                   </div>
-                  <span className="text-xs text-gray-400">{c.time}</span>
-                </button>
-              ))}
-            </div>
-          </section>
-
-          {/* Recent Patients */}
-          <section className="bg-[#1A2622]/90 border border-gray-700 rounded-2xl shadow-lg p-5">
-            <h2 className="font-semibold text-white text-lg mb-3">
-              Recent Patients
-            </h2>
-            <div className="divide-y divide-gray-700">
-              {recentPatients.map((p) => (
-                <div
-                  key={p.id}
-                  className="flex justify-between items-center py-3 px-2"
-                >
-                  <p className="text-white">{p.name}</p>
-                  <span className="text-xs text-gray-400">
-                    Last Visit: {p.lastVisit}
-                  </span>
                 </div>
-              ))}
-            </div>
-          </section>
-        </main>
-
-        {/* Quick Actions Nav Bar */}
-        <nav className="fixed bottom-16 left-0 right-0 z-40 px-4">
-          <div className="bg-[#1A2622]/95 backdrop-blur-md border border-gray-700 rounded-2xl shadow-xl flex justify-around py-2">
-            <button
-              onClick={() => setModal("patients")}
-              className="flex flex-col items-center justify-center gap-1 px-3 py-1 rounded-lg hover:bg-gray-800/50 transition"
-            >
-              <Users size={20} className="text-cyan-400" />
-              <span className="text-xs text-gray-300">Patients</span>
-            </button>
-            <button
-              onClick={() => setModal("schedule")}
-              className="flex flex-col items-center justify-center gap-1 px-3 py-1 rounded-lg hover:bg-gray-800/50 transition"
-            >
-              <ClipboardList size={20} className="text-cyan-400" />
-              <span className="text-xs text-gray-300">Schedule</span>
-            </button>
-            <button
-              onClick={() => setModal("alerts")}
-              className="relative flex flex-col items-center justify-center gap-1 px-3 py-1 rounded-lg hover:bg-gray-800/50 transition"
-            >
-              <div className="relative">
-                <Bell size={20} className="text-cyan-400" />
-                {pendingRequests.length > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center">
-                    {pendingRequests.length}
-                  </span>
-                )}
               </div>
-              <span className="text-xs text-gray-300">Alerts</span>
-            </button>
-          </div>
-        </nav>
 
-        {/* Patients Modal */}
-        <Modal
-          show={modal === "patients"}
-          onClose={() => setModal(null)}
-          title="My Patients"
-        >
-          <div className="divide-y divide-gray-700">
-            {patients.map((p) => (
-              <button
-                key={p.id}
-                onClick={() => setSelected(p)}
-                className="w-full flex justify-between items-center py-3 px-2 hover:bg-gray-800/40 rounded-lg transition"
-              >
-                <div>
-                  <p className="text-white font-medium">{p.name}</p>
-                  <p className="text-xs text-gray-400">{p.condition}</p>
-                </div>
-                <span className="text-xs text-gray-400">
-                  Last Visit: {p.lastVisit}
-                </span>
-              </button>
-            ))}
-          </div>
-        </Modal>
-
-        {/* Schedule Modal */}
-        <Modal
-          show={modal === "schedule"}
-          onClose={() => setModal(null)}
-          title="Today's Schedule"
-        >
-          <div className="divide-y divide-gray-700">
-            {schedule.map((s) => (
-              <button
-                key={s.id}
-                onClick={() => setSelected(s)}
-                className="w-full flex justify-between items-center py-3 px-2 hover:bg-gray-800/40 rounded-lg transition"
-              >
-                <div>
-                  <p className="text-white font-medium">{s.patient}</p>
-                  <p className="text-xs text-gray-400">{s.type}</p>
-                </div>
-                <span className="text-xs text-gray-400">{s.time}</span>
-              </button>
-            ))}
-          </div>
-        </Modal>
-
-        {/* Alerts Modal */}
-        <Modal
-          show={modal === "alerts"}
-          onClose={() => setModal(null)}
-          title="Pending Alerts"
-        >
-          {pendingRequests.length === 0 ? (
-            <p className="text-sm text-gray-400">No pending requests.</p>
-          ) : (
-            <div className="divide-y divide-gray-700">
-              {pendingRequests.map((r) => (
+              <div className="flex items-center gap-3">
                 <button
-                  key={r.id}
-                  onClick={() => setSelected(r)}
-                  className="w-full flex justify-between items-center py-3 hover:bg-gray-800/40 px-2 rounded-lg transition"
+                  onClick={() => setShowAlerts(true)}
+                  className="relative p-3 rounded-full bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 shadow-md"
                 >
-                  <p className="text-white font-medium">{r.name}</p>
-                  <span className="text-xs text-gray-400">{r.reason}</span>
+                  <Bell size={20} />
+                  {alerts.length > 0 && (
+                    <span className="absolute top-1 right-1 inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-bold leading-none text-white transform bg-red-500 rounded-full">
+                      {alerts.length}
+                    </span>
+                  )}
                 </button>
+
+                <button
+                  onClick={() => setSidebarOpen(!sidebarOpen)}
+                  className="p-3 rounded-full bg-teal-500 text-white hover:bg-teal-600 shadow-md"
+                >
+                  <Menu size={20} />
+                </button>
+              </div>
+            </div>
+
+            {/* KPIs */}
+            <div className="grid grid-cols-2 gap-3">
+              <KPI icon={User} value="128" label="Patients" />
+              <KPI icon={Calendar} value="12" label="This Week" />
+            </div>
+
+            {/* Previous Consultations */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Previous Consultations</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="divide-y divide-slate-200">
+                  {consultations.map((c) => (
+                    <button
+                      key={c.id}
+                      onClick={() => setSelectedConsult(c)}
+                      className="flex w-full items-center justify-between py-3 text-left hover:bg-slate-50 rounded-lg px-2"
+                    >
+                      <div>
+                        <p className="font-medium text-slate-900">
+                          {c.patientName}
+                        </p>
+                        <p className="text-xs text-slate-500">{c.reason}</p>
+                      </div>
+                      <span className="text-xs text-slate-500">
+                        {c.date}, {c.time}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </main>
+        </div>
+
+        {/* Modals */}
+        <ModalCard
+          show={!!selectedConsult}
+          onClose={() => setSelectedConsult(null)}
+          title="Consultation Summary"
+        >
+          {selectedConsult && (
+            <ConsultationSummaryCard consult={selectedConsult} />
+          )}
+        </ModalCard>
+
+        <ModalCard
+          show={showAlerts}
+          onClose={() => setShowAlerts(false)}
+          title="Consult Requests"
+        >
+          {alerts.length === 0 ? (
+            <p className="text-sm text-slate-600">No new requests.</p>
+          ) : (
+            <div className="space-y-3">
+              {alerts.map((a) => (
+                <ConsultRequestCard
+                  key={a.id}
+                  request={a}
+                  onAccept={() => console.log("Accepted", a.id)}
+                  onReject={() => console.log("Rejected", a.id)}
+                />
               ))}
             </div>
           )}
-        </Modal>
+        </ModalCard>
 
-        {/* Generic Details Modal */}
-        <Modal
-          show={!!selected}
-          onClose={() => setSelected(null)}
-          title="Details"
+        <ModalCard
+          show={showAccountModal}
+          onClose={() => setShowAccountModal(false)}
+          title="Account Details"
         >
-          <div className="space-y-2">
-            <p className="text-sm text-gray-300">
-              <strong className="text-white">Name:</strong>{" "}
-              {selected?.patientName || selected?.name || selected?.patient}
-            </p>
-            {selected?.time && (
-              <p className="text-sm text-gray-300">
-                <strong className="text-white">Time:</strong> {selected?.time}
-              </p>
-            )}
-            {selected?.reason && (
-              <p className="text-sm text-gray-300">
-                <strong className="text-white">Reason:</strong>{" "}
-                {selected?.reason}
-              </p>
-            )}
-            {selected?.type && (
-              <p className="text-sm text-gray-300">
-                <strong className="text-white">Type:</strong> {selected?.type}
-              </p>
-            )}
+          <div className="space-y-3">
+            <TextField
+              placeholder="First Name"
+              value={acctProfile?.first_name || ""}
+              onChange={(e) =>
+                setAcctProfile({ ...acctProfile, first_name: e.target.value })
+              }
+              icon={User}
+            />
+            <TextField
+              placeholder="Last Name"
+              value={acctProfile?.last_name || ""}
+              onChange={(e) =>
+                setAcctProfile({ ...acctProfile, last_name: e.target.value })
+              }
+              icon={User}
+            />
+            <TextField
+              placeholder="Phone Number"
+              type="tel"
+              value={acctProfile?.phone_number || ""}
+              onChange={(e) => {
+                const val = e.target.value.replace(/\D/g, "");
+                if (val.length <= 11)
+                  setAcctProfile({ ...acctProfile, phone_number: val });
+              }}
+              icon={Phone}
+            />
+            <TextField
+              placeholder="Account Number"
+              type="tel"
+              value={acctProfile?.bank_account_number || ""}
+              onChange={(e) => {
+                const val = e.target.value.replace(/\D/g, "");
+                if (val.length <= 11)
+                  setAcctProfile({ ...acctProfile, bank_account_number: val });
+              }}
+              icon={CreditCard}
+            />
+            <div className="relative">
+              <CreditCard className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
+              <select
+                value={acctProfile?.bank_name || ""}
+                onChange={(e) =>
+                  setAcctProfile({ ...acctProfile, bank_name: e.target.value })
+                }
+                className="w-full appearance-none rounded-lg border border-gray-300 bg-white pl-10 pr-4 py-2 text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#00CFC1]"
+              >
+                <option value="">Select Bank</option>
+                {banks.map((b) => (
+                  <option key={b} value={b}>
+                    {b}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <Button
+              disabled={!!updating}
+              onClick={handleUpdateAcct}
+              className="w-full"
+            >
+              {updating ? "Saving..." : "Save Changes"}
+            </Button>
           </div>
+        </ModalCard>
 
-          <div className="mt-5 flex justify-end gap-3">
-            {selected?.patientName && (
-              <button className="px-4 py-2 bg-[#00CFC1] text-[#0A0F0D] font-semibold rounded-lg text-sm flex items-center gap-2 hover:bg-[#00e0d2] transition">
-                <Video size={16} /> Start Call
-              </button>
-            )}
-          </div>
-        </Modal>
+        <ModalCard
+          show={showPayouts}
+          onClose={() => setShowPayouts(false)}
+          title="Payouts"
+        >
+          {payouts.length === 0 ? (
+            <p className="text-sm text-slate-600">No payouts yet.</p>
+          ) : (
+            <div className="space-y-3">
+              {payouts.map((p) => (
+                <div
+                  key={p.id}
+                  className="p-3 border border-slate-200 rounded-lg bg-slate-50 flex justify-between items-center"
+                >
+                  <div>
+                    <p className="font-medium text-slate-900">{p.date}</p>
+                    <p className="text-xs text-slate-500">{p.status}</p>
+                  </div>
+                  <span className="text-teal-700 font-semibold">
+                    {p.amount}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </ModalCard>
       </RequireAuth>
     </MobileOnly>
   );

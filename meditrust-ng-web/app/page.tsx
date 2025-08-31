@@ -16,7 +16,7 @@ export default function Home() {
               <span className="text-[#98FF98]">Medi</span>
               <span className="text-[#00CFC1]">Trust</span>
             </h2>
-            <p className="text-gray-300 max-w-xs">
+            <p className="text-white max-w-xs">
               Trusted telemedicine right on your phone. Connect with doctors,
               anytime, anywhere.
             </p>
