@@ -8,7 +8,7 @@ export default function BackgroundLayout({ children }: { children: React.ReactNo
     <div className="relative h-screen w-full overflow-hidden">
       {/* Background Image */}
       <Image
-        src="/onboarding-bg.jpg"   // replace with your preferred bg
+        src="/groupMeditrust.png"   // replace with your preferred bg
         alt="background"
         fill
         className="object-cover"
@@ -16,7 +16,7 @@ export default function BackgroundLayout({ children }: { children: React.ReactNo
       />
 
       {/* Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#0B1A16]/80 to-[#111C18] z-10" />
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#0B1A16]/30 to-[#14B8A6]/50 z-10" />
 
       {/* Logo Top Left */}
       <div className="absolute top-4 left-4 flex items-center z-20">
