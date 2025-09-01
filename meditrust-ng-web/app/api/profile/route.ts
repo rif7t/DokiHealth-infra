@@ -55,14 +55,19 @@ export async function PUT(req: NextRequest) {
   const _user = {
     id: user.id,
     role: isDoctor ? "doctor" : "patient",
-    title: profile.title,
+    title: isDoctor ? "Dr." : profile.title,
     first_name: profile.first_name,
     last_name: profile.last_name,
+    age: profile.age,
+    gender: profile.gender,
     phone_number: profile.phone_number,
     specialty: isDoctor ? profile.specialty || "General Practice" : null,
     verified: isDoctor,
     is_available: isDoctor,
     is_online: true,
+    bank_name: profile.bank_name,
+    account_name: `${profile.first_name} ${profile.last_name}`,
+    bank_account_number: profile.bank_account_number,
     email: profile?.email || user.email,
   };
 

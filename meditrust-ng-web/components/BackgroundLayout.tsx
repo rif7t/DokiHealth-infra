@@ -16,7 +16,7 @@ export default function BackgroundLayout({ children }: { children: React.ReactNo
       />
 
       {/* Overlay */}
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#0B1A16]/50 to-[#14B8A6] z-10" />
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#0B1A16]/30 to-[#14B8A6]/50 z-10" />
 
       {/* Logo Top Left */}
       <div className="absolute top-4 left-4 flex items-center z-20">
