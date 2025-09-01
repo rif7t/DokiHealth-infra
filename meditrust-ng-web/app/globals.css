@@ -4,16 +4,14 @@
 
 html,
 body {
-  @apply bg-brand-ink text-gray-100;
+  @apply bg-brand-ink text-purple-100;
+  height: 100%;
+  overflow: auto;
+  overscroll-behavior-y:contain;
   -webkit-font-smoothing: antialiased;
 }
 
-.mobile-shell {
-  max-width: 480px;
-  margin: 0 auto;
-  min-height: 100vh;
-  padding-bottom: 72px;
-}
+
 
 .card {
   @apply rounded-2xl bg-brand-soft shadow-soft p-6;
@@ -29,7 +27,7 @@ body {
   @apply rounded-full px-4 py-3 font-medium transition active:scale-[0.98];
 }
 .btn-primary {
-  @apply btn bg-brand-cyan text-black hover:bg-cyan-400;
+  @apply btn bg-blue-500 text-black hover:bg-cyan-400;
 }
 .btn-ghost {
   @apply btn bg-gray-800 text-gray-200 border border-gray-700;

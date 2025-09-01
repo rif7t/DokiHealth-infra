@@ -28,17 +28,7 @@ export default function Onboarding() {
     );
   };
 
-  // Lock the page from scrolling
-  useEffect(() => {
-    document.body.style.overflow = "hidden";
-    (document.documentElement as HTMLElement).style.overscrollBehavior = "none";
-    return () => {
-      document.body.style.overflow = "";
-      (document.documentElement as HTMLElement).style.overscrollBehavior = "";
-    };
-  }, []);
-
-  // ▶️ Right Arrow key: next slide or finish on last slide
+  // Right Arrow key: next slide or finish on last slide
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "ArrowRight") {
@@ -50,12 +40,13 @@ export default function Onboarding() {
     return () => window.removeEventListener("keydown", onKey);
   }, [step]); // depends on step so it uses the latest
 
+
   return (
     <MobileOnly>
       <BackgroundLayout>
-        <div className="h-screen overflow-hidden relative flex items-center justify-center">
+        <div className="relative h-[100dvh] w-full flex flex-col overflow-hidden overscroll-none ">
           {/* Content */}
-          <div className="flex-1 flex flex-col items-center justify-start px-6 pt-12">
+          <div className="flex-1 flex flex-col items-center justify-center px-4 pt-24 pb-20">
             <AnimatePresence mode="wait">
               <motion.div
                 key={step}
@@ -122,38 +113,48 @@ export default function Onboarding() {
           </div>
 
           {/* Nav */}
-          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-6 z-30 bg-white/90 backdrop-blur border border-slate-200 rounded-full pl-4 pr-2 py-2 shadow-lg">
-            <button
-              className="text-slate-600 text-sm hover:text-slate-900 transition"
-              onClick={finish}
-            >
-              Skip
-            </button>
+          {/* Outer container: absolute + centering */}
+<div
+  className="absolute 
+             bottom-[max(env(safe-area-inset-bottom),1rem)] 
+             left-1/2 -translate-x-1/2 
+             flex justify-center w-full "
+>
+        {/* Inner container: the pill with buttons */}
+        <div className="flex items-center gap-6 bg-white/90 backdrop-blur border border-slate-200 rounded-full pl-4 pr-2 py-2 shadow-lg">
+          <button
+            className="text-slate-600 text-sm hover:text-slate-900 transition"
+            onClick={finish}
+          >
+            Skip
+          </button>
 
-            <div className="flex gap-2">
-              {slides.map((_, i) => (
-                <button
-                  key={i}
-                  onClick={() => setStep(i)}
-                  className={`h-2 w-2 rounded-full transition-all ${
-                    i === step ? "bg-teal-500 w-4" : "bg-slate-300"
-                  }`}
-                  aria-label={`Slide ${i + 1}`}
-                />
-              ))}
-            </div>
-
-            <button
-              onClick={() =>
-                step === slides.length - 1 ? finish() : setStep(step + 1)
-              }
-              className="bg-teal-500 hover:bg-teal-600 active:scale-95 text-white rounded-full p-3 shadow-md flex items-center justify-center"
-              aria-keyshortcuts="ArrowRight"
-              title="Next (→)"
-            >
-              <ArrowRight size={18} />
-            </button>
+          <div className="flex gap-2">
+            {slides.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setStep(i)}
+                className={`h-2 w-2 rounded-full transition-all ${
+                  i === step ? "bg-teal-500 w-4" : "bg-slate-300"
+                }`}
+                aria-label={`Slide ${i + 1}`}
+              />
+            ))}
           </div>
+
+          <button
+            onClick={() =>
+              step === slides.length - 1 ? finish() : setStep(step + 1)
+            }
+            className="bg-teal-500 hover:bg-teal-600 active:scale-95 text-white rounded-full p-3 shadow-md flex items-center justify-center"
+            aria-keyshortcuts="ArrowRight"
+            title="Next (→)"
+          >
+            <ArrowRight size={18} />
+          </button>
+        </div>
+      </div>
+
         </div>
       </BackgroundLayout>
     </MobileOnly>
