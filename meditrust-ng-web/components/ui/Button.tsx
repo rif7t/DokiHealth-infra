@@ -20,8 +20,8 @@ export default function Button({
   }[size];
 
   const variants = {
-    primary: 'bg-teal-500 text-white hover:bg-teal-600 shadow-sm',
-    secondary: 'bg-slate-900 text-white hover:bg-slate-800',
+    primary: 'bg-blue-500 text-white hover:bg-teal-600 shadow-sm',
+    secondary: 'bg-blue-300 text-white hover:bg-slate-800',
     ghost: 'bg-transparent text-slate-700 hover:bg-slate-100',
     danger: 'bg-red-500 text-white hover:bg-red-600',
   }[variant];

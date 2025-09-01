@@ -13,6 +13,8 @@ export default function SignIn() {
   const [isSignUp, setIsSignUp] = useState(false);
   const router = useRouter();
 
+
+
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -121,7 +123,7 @@ export default function SignIn() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3 rounded-xl bg-[#00CFC1] text-[#0A0F0D] font-semibold shadow-md hover:bg-[#00B5A8] disabled:opacity-50 transition-colors"
+                className="w-full py-3 rounded-xl bg-[#0A75F9] text-[#0A0F0D] font-semibold shadow-md hover:bg-[#00B5A8] disabled:opacity-50 transition-colors"
               >
                 {loading
                   ? isSignUp

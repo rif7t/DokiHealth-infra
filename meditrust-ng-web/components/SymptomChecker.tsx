@@ -59,7 +59,7 @@ export default function SymptomChecker() {
       {/* Step 1 */}
       {step === 1 && (
         <>
-          <h2 className="mb-3 text-lg font-semibold">How do you feel today?</h2>
+          <h2 className="mb-3 text-black-700 font-SF Pro bold">How do you feel today?</h2>
           <input
             type="text"
             placeholder="e.g., Headache, Fever, ..."
