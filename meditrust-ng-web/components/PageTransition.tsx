@@ -1,7 +1,7 @@
 // app/components/PageTransition.tsx
 "use client";
 
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, easeInOut, motion } from "framer-motion";
 import { usePathname } from "next/navigation";
 
 type Props = { children: React.ReactNode };
