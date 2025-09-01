@@ -77,7 +77,7 @@ export default function ProfileContent() {
     <MobileOnly>
       <RequireAuth>
         <BackgroundLayout>
-          <div className="mx-auto flex min-h-screen max-w-md items-center justify-center p-4">
+          <div className="mx-auto flex h-[100dvh] max-w-md items-center justify-center p-4">
             <Card className="w-full">
               <CardHeader>
                 <CardTitle>Create Profile</CardTitle>
