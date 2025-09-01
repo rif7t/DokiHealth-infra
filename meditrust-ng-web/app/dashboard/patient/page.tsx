@@ -90,11 +90,11 @@ export default function PatientDashboard() {
   return (
     <MobileOnly>
       <RequireAuth>
-        <div className="relative flex min-h-screen bg-slate-50">
+        <div className="relative flex min-h-screen bg-slate-60">
           {/* Sidebar */}
           <div
             className={clsx(
-              "fixed top-0 right-0 h-full w-64 bg-white shadow-lg transform transition-transform duration-300 z-40",
+              "fixed top-0 right-2 h-full w-64 bg-white shadow-lg transform transition-transform duration-300 z-40",
               sidebarOpen ? "translate-x-0" : "translate-x-full"
             )}
           >

@@ -1,16 +1,19 @@
 "use client";
 import Link from "next/link";
 import MobileOnly from "@/components/MobileOnly";
+import { useEffect } from "react";
 import BackgroundLayout from "@/components/BackgroundLayout";
 
 
 export default function Home() {
+
+
   return (
     <MobileOnly>
       <BackgroundLayout>
         <main className="h-full flex flex-col justify-between items-center text-center">
           {/* Hero Section */}
-          <div className="flex-1 flex flex-col items-center justify-center px-6 mt-2">
+          <div className="flex-1 flex flex-col items-center justify-center px-6 mt-20">
             <h2 className="text-3xl font-bold text-white mb-3">
               Welcome to{" "}
               <span className="text-[#98FF98]">Medi</span>
@@ -23,7 +26,7 @@ export default function Home() {
           </div>
 
           {/* Action Button */}
-          <div className="pb-16 px-6 w-full">
+          <div className="pb-10 px-6 w-full">
             <Link
               href="/onboarding"
               className="block w-full py-3 rounded-lg bg-[#98FF98] text-[#0A0F0D] font-semibold shadow-md hover:bg-[#00e6d7] transition"
