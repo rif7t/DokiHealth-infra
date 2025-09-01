@@ -25,7 +25,7 @@ export default function MobileOnly({ children }: { children: React.ReactNode }) 
           <CardContent>
             <p className="text-sm text-gray-600 leading-relaxed">
               MediTrust is designed for mobile devices.  
-              Please open this app on your phone for the best experience.
+              Please open this app on your phone for the best experience or shrink Desktop window
             </p>
             <div className="mt-4 text-xs text-gray-500 bg-blue-50 px-3 py-2 rounded-lg inline-block">
               💡 Tip: Use browser dev tools to simulate a mobile view.
