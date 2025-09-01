@@ -1,24 +1,35 @@
-// components/PageTransition.tsx
-'use client'
+// app/components/PageTransition.tsx
+"use client";
 
-import { motion, AnimatePresence } from 'framer-motion'
-import { usePathname } from 'next/navigation'
+import { AnimatePresence, easeInOut, motion } from "framer-motion";
+import { usePathname } from "next/navigation";
 
-export default function PageTransition({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname()
+type Props = { children: React.ReactNode };
+
+export default function PageTransition({ children }: Props) {
+  const pathname = usePathname();
+
+  const variants = {
+    initial: { x: "0%" },   // new page starts off-screen right
+    animate: { x: 0 },        // slides into place
+    exit: { x: "0%" },     // old page slides out left
+  };
 
   return (
-    <AnimatePresence mode="wait">
-      <motion.div
-        key={pathname}
-        initial={{ opacity: 0, x: 30 }}
-        animate={{ opacity: 1, x: 0 }}
-        exit={{ opacity: 0, x: -30 }}
-        transition={{ duration: 0.35, ease: 'easeInOut' }}
-        className="h-full"
-      >
-        {children}
-      </motion.div>
-    </AnimatePresence>
-  )
+    <div className="relative min-h-screen overflow-hidden bg-slate-50">
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.div
+          key={pathname}
+          className="absolute inset-0"
+          variants={variants}
+          initial="initial"
+          animate="animate"
+          exit="exit"
+          transition={{ duration: 0.1, ease: easeInOut }}
+        >
+          {children}
+        </motion.div>
+      </AnimatePresence>
+    </div>
+  );
 }

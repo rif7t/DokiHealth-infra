@@ -17,73 +17,70 @@ export default function SignIn() {
     e.preventDefault();
     setLoading(true);
 
-    let userError;
-    if (isSignUp) {
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-      });
-      userError = error;
-    } else {
-      console.log("sign-in");
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      console.log(data.user);
-      userError = error;
-    }
+    try {
+      let userError = null;
 
-    setLoading(false);
+      if (isSignUp) {
+        const { error } = await supabase.auth.signUp({ email, password });
+        userError = error;
+      } else {
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+        userError = error;
+      }
 
-    if (userError) {
-      alert(userError.message);
-    } else {
-      // Get fresh access token
+      if (userError) {
+        alert(userError.message);
+        return;
+      }
+
       const {
         data: { session },
+        error: sessionError,
       } = await supabase.auth.getSession();
 
-      if (!session) {
-        alert("No session found after auth");
+      if (sessionError || !session) {
+        alert("Could not fetch session after authentication.");
         return;
       }
 
-      // Call API with token
       const res = await fetch("/api/profile", {
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        },
+        headers: { Authorization: `Bearer ${session.access_token}` },
       });
-
       const data = await res.json();
 
-      console.log(data.profile);
-
       if (data.error) {
-        alert(data.error);
+        router.replace("/profile");
         return;
       }
 
-      // Decide dashboard based on role or create a profile
-      if (data.profile.role == "doctor") {
+      if (data.profile.role === "doctor") {
         router.replace("/dashboard/doctor");
-      } else if (data.profile.role == "patient") {
+      } else if (data.profile.role === "patient") {
         router.replace("/dashboard/patient");
-      } else router.replace("/profile");
+      } else {
+        router.replace("/profile");
+      }
+    } catch (err: any) {
+      console.error("Auth error:", err);
+      alert("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <MobileOnly>
       <BackgroundLayout>
-        <div className="flex flex-col items-center justify-center h-full px-6">
+        <div className="flex flex-col items-center justify-center h-full px-6 mt-16">
           {/* Title */}
           <div className="text-center mb-8">
             <h1 className="text-2xl font-semibold text-white">
-              {isSignUp ? "Let's get you started!" : "Welcome back! Sign in."}
+              {isSignUp ? "Let's get you started!" : "Welcome back!"}
             </h1>
-            <p className="text-gray-300 text-sm mt-1">
+            <p className="text-white text-sm mt-1">
               {isSignUp
                 ? "Sign up with your email to begin"
                 : "Sign in with your email and password"}
@@ -92,38 +89,39 @@ export default function SignIn() {
 
           <div className="w-full max-w-sm space-y-4">
             <form onSubmit={handleAuth} className="space-y-4">
+              {/* Email */}
               <div className="relative">
-                <Mail
-                  className="absolute left-3 top-3 text-gray-400"
-                  size={18}
-                />
+                <Mail className="absolute left-3 top-3 text-gray-400" size={18} />
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@example.com"
-                  className="w-full pl-10 pr-4 py-3 rounded-lg bg-[#0A0F0D]/80 border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#00CFC1]"
+                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-white border border-gray-300 text-gray-900 
+                             placeholder-gray-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#00CFC1] focus:border-[#00CFC1]"
                   required
                 />
+              </div>
 
-                <KeyboardIcon
-                  className="absolute left-3 top-[68px] text-gray-400"
-                  size={18}
-                />
+              {/* Password */}
+              <div className="relative">
+                <KeyboardIcon className="absolute left-3 top-3 text-gray-400" size={18} />
                 <input
                   type="password"
                   value={password}
                   onChange={(p) => setPassword(p.target.value)}
                   placeholder="Your password"
-                  className="w-full pl-10 pr-4 mt-2 py-3 rounded-lg bg-[#0A0F0D]/80 border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#00CFC1]"
+                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-white border border-gray-300 text-gray-900 
+                             placeholder-gray-400 shadow-sm focus:outline-none focus:ring-2 focus:ring-[#00CFC1] focus:border-[#00CFC1]"
                   required
                 />
               </div>
 
+              {/* Submit */}
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full py-3 rounded-lg bg-[#00CFC1] text-[#0A0F0D] font-semibold shadow-md disabled:opacity-50"
+                className="w-full py-3 rounded-xl bg-[#00CFC1] text-[#0A0F0D] font-semibold shadow-md hover:bg-[#00B5A8] disabled:opacity-50 transition-colors"
               >
                 {loading
                   ? isSignUp
@@ -136,11 +134,12 @@ export default function SignIn() {
             </form>
 
             {/* Toggle Between Sign In & Sign Up */}
-            <p className="text-center text-sm text-gray-400 mt-4">
+            <p className="text-center text-sm text-white mt-4">
               {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
               <button
                 onClick={() => setIsSignUp(!isSignUp)}
-                className="text-[#00CFC1] font-medium hover:underline"
+                type="button"
+                className="text-yellow-300 font-medium hover:underline"
               >
                 {isSignUp ? "Sign In" : "Sign Up"}
               </button>

@@ -1,0 +1,42 @@
+<svg width="50" height="30" viewBox="0 0 480 440" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Keep shadow if you like subtle elevation -->
+    <filter id="shadow3" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="14" flood-opacity="0.15"/>
+    </filter>
+  </defs>
+
+  <!-- Card -->
+  <rect x="0" y="0" width="480" height="440" rx="28" fill="white" stroke="#E6E9EF" filter="url(#shadow3)"/>
+
+  <!-- Pack with QR/code -->
+  <rect x="50" y="60" width="220" height="140" rx="16" fill="#F3F6FA" stroke="#E6E9EF"/>
+  <rect x="70" y="80" width="64" height="64" fill="white" stroke="#E6E9EF"/>
+  <!-- QR blocks -->
+  <rect x="78" y="88" width="16" height="16" fill="#14B8A6"/>
+  <rect x="102" y="88" width="8" height="8" fill="#14B8A6"/>
+  <rect x="102" y="104" width="8" height="8" fill="#14B8A6"/>
+  <rect x="86" y="112" width="8" height="8" fill="#14B8A6"/>
+
+  <rect x="146" y="84" width="100" height="12" rx="6" fill="#E5EEF6"/>
+  <rect x="146" y="104" width="80" height="10" rx="5" fill="#E5EEF6"/>
+  <rect x="146" y="122" width="64" height="10" rx="5" fill="#E5EEF6"/>
+
+  <!-- Verified badge -->
+  <rect x="290" y="80" width="120" height="40" rx="12" fill="#E6FBF8" stroke="#99E7DE"/>
+  <path d="M302 100l12 12 16-18" stroke="#14B8A6" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="348" y="106" text-anchor="middle" font-family="Inter, Arial" font-size="12" fill="#0F766E">Verified</text>
+
+  <!-- Timeline rows -->
+  <circle cx="90" cy="240" r="6" fill="#14B8A6"/>
+  <rect x="110" y="234" width="320" height="12" rx="6" fill="#F3F6FA"/>
+  <circle cx="90" cy="276" r="6" fill="#9CF0C4"/>
+  <rect x="110" y="270" width="280" height="12" rx="6" fill="#F3F6FA"/>
+  <circle cx="90" cy="312" r="6" fill="#14B8A6"/>
+  <rect x="110" y="306" width="300" height="12" rx="6" fill="#F3F6FA"/>
+
+  <!-- Caption -->
+  <text x="240" y="360" text-anchor="middle" font-family="Inter, Arial" font-size="16" fill="#334155">
+    Scan code → verify pack → save to health timeline
+  </text>
+</svg>
