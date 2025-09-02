@@ -44,7 +44,7 @@ export default function Onboarding() {
   return (
     <MobileOnly>
       <BackgroundLayout>
-        <div className="relative h-[100dvh] w-full flex flex-col overflow-hidden overscroll-none ">
+        <div className="relative h-[100dvh] w-full flex flex-col  ">
           {/* Content */}
           <div className="flex-1 flex flex-col items-center justify-center px-4 pt-24 pb-20">
             <AnimatePresence mode="wait">

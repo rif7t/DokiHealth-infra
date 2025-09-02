@@ -97,14 +97,10 @@ export default function DoctorDashboard() {
     },
   ];
 
-  const alerts = [
-    { id: 101, patientName: "Sarah Wilson", reason: "New patient sign-up" },
-    {
-      id: 102,
-      patientName: "David Lee",
-      reason: "Diabetes management consult",
-    },
-  ];
+  const alerts = 
+    { id: 101, patientName: "Sarah Wilson", reason: "New patient sign-up" };
+    
+  
 
   const payouts = [
     { id: 1, date: "Aug 1, 2025", amount: "₦50,000", status: "Paid" },
@@ -220,11 +216,11 @@ export default function DoctorDashboard() {
                   className="relative p-3 rounded-full bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 shadow-md"
                 >
                   <Bell size={20} />
-                  {alerts.length > 0 && (
+                  {/* {alerts.length > 0 && (
                     <span className="absolute top-1 right-1 inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-bold leading-none text-white transform bg-red-500 rounded-full">
                       {alerts.length}
                     </span>
-                  )}
+                  )} */}
                 </button>
 
                 <button
@@ -288,20 +284,16 @@ export default function DoctorDashboard() {
           onClose={() => setShowAlerts(false)}
           title="Consult Requests"
         >
-          {alerts.length === 0 ? (
-            <p className="text-sm text-slate-600">No new requests.</p>
-          ) : (
             <div className="space-y-3">
-              {alerts.map((a) => (
+          
                 <ConsultRequestCard
-                  key={a.id}
-                  request={a}
-                  onAccept={() => console.log("Accepted", a.id)}
-                  onReject={() => console.log("Rejected", a.id)}
+                  key={alerts.id}
+                  request={alerts}
+                  onAccept={() => console.log("Accepted", alerts.id)}
+                  onReject={() => console.log("Rejected", alerts.id)}
                 />
-              ))}
+            
             </div>
-          )}
         </ModalCard>
 
         <ModalCard

@@ -1,7 +1,10 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect} from 'react';
+import React from "react";
 import { TriageResponse } from '@/app/api/triage/route';
 import Button from './ui/Button';
+import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabaseClient";
 
 export default function SymptomChecker() {
   const [step, setStep] = useState(1);
@@ -12,6 +15,37 @@ export default function SymptomChecker() {
   const [submitted, setSubmitted] = useState(false);
   const [triageResult, setTriageResult] = useState<TriageResponse | null>(null);
   const [loading, setLoading] = useState(false);
+  const [err, setErr] = React.useState<string | null>(null);
+
+type Props = { consultId: string };
+
+
+  
+  let accessToken = "";
+    
+  const onStartConsult = async () => {
+     try{
+        const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      accessToken = session.access_token;
+      if (!session) return;
+      const res_consult_request = await fetch("/api/consult-request", {
+        headers: { Authorization: `Bearer ${accessToken}` },
+        body: JSON.stringify({ triage_id: triageResult.triage_id }),
+      });
+      const data = await res_consult_request.json();
+      
+      const res_assign_consult = await fetch("/api/assign_consult_and_pay", {
+        headers: { Authorization: `Bearer ${accessToken}` },
+        body: JSON.stringify({ triage_id: triageResult.triage_id }),
+      });
+     }catch(e){
+      console.log('Consult Request Error: ', e)
+     }
+  };
+  
+  
 
   const handleTriage = async () => {
     const combinedSymptoms = `${symptom}, ${duration}, ${severity}${extras.length ? ', ' + extras.join(', ') : ''}`;
@@ -59,7 +93,7 @@ export default function SymptomChecker() {
       {/* Step 1 */}
       {step === 1 && (
         <>
-          <h2 className="mb-3 text-black-700 font-SF Pro bold">How do you feel today?</h2>
+          <h2 className="mb-3 text-teal-700 font-SF Pro bold">How do you feel today?</h2>
           <input
             type="text"
             placeholder="e.g., Headache, Fever, ..."
@@ -129,6 +163,7 @@ export default function SymptomChecker() {
         </>
       )}
 
+    
       {/* Step 5 */}
       {step === 5 && submitted && (
         <>
@@ -142,7 +177,7 @@ export default function SymptomChecker() {
             <button onClick={onClose} className="rounded-xl bg-slate-200 px-4 py-2 text-sm font-medium text-slate-800">
               Close
             </button>
-            <button className="rounded-xl bg-teal-500 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-600">
+            <button onClick={onStartConsult} className="rounded-xl bg-teal-500 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-600">
               Start Consult
             </button>
           </div>
