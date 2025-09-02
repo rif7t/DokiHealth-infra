@@ -4,9 +4,11 @@ npm-debug.log
 yarn-error.log
 dist/
 build/
-.next/
 .expo/
 .expo-shared/
+
+# React 
+.next/
 
 # React Native
 ios/Pods/
