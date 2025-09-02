@@ -1,67 +1,43 @@
-'use client';
-import { useState, useEffect} from 'react';
-import React from "react";
-import { TriageResponse } from '@/app/api/triage/route';
-import Button from './ui/Button';
-import { useRouter } from "next/navigation";
+"use client";
+import { useState, useEffect } from "react";
+import { TriageResponse } from "@/app/api/triage/route";
+import Button from "./ui/Button";
 import { supabase } from "@/lib/supabaseClient";
 
 export default function SymptomChecker() {
   const [step, setStep] = useState(1);
-  const [symptom, setSymptom] = useState('');
-  const [duration, setDuration] = useState('');
-  const [severity, setSeverity] = useState('');
+  const [symptom, setSymptom] = useState("");
+  const [duration, setDuration] = useState("");
+  const [severity, setSeverity] = useState("");
   const [extras, setExtras] = useState<string[]>([]);
   const [submitted, setSubmitted] = useState(false);
   const [triageResult, setTriageResult] = useState<TriageResponse | null>(null);
   const [loading, setLoading] = useState(false);
-  const [err, setErr] = React.useState<string | null>(null);
-
-type Props = { consultId: string };
-
-
-  
-  let accessToken = "";
-    
-  const onStartConsult = async () => {
-     try{
-        const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      accessToken = session.access_token;
-      if (!session) return;
-      const res_consult_request = await fetch("/api/consult-request", {
-        headers: { Authorization: `Bearer ${accessToken}` },
-        body: JSON.stringify({ triage_id: triageResult.triage_id }),
-      });
-      const data = await res_consult_request.json();
-      
-      const res_assign_consult = await fetch("/api/assign_consult_and_pay", {
-        headers: { Authorization: `Bearer ${accessToken}` },
-        body: JSON.stringify({ triage_id: triageResult.triage_id }),
-      });
-     }catch(e){
-      console.log('Consult Request Error: ', e)
-     }
-  };
-  
-  
 
   const handleTriage = async () => {
-    const combinedSymptoms = `${symptom}, ${duration}, ${severity}${extras.length ? ', ' + extras.join(', ') : ''}`;
+    const combinedSymptoms = `${symptom}, ${duration}, ${severity}${
+      extras.length ? ", " + extras.join(", ") : ""
+    }`;
 
     try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session) return;
       setLoading(true);
-      const res = await fetch('/api/triage', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await fetch("/api/triage", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
         body: JSON.stringify({ symptoms: combinedSymptoms }),
       });
       if (!res.ok) throw new Error(await res.text());
       const result: TriageResponse = await res.json();
       setTriageResult(result);
     } catch (e) {
-      console.error('Triage API error:', e);
+      console.error("Triage API error:", e);
     } finally {
       setLoading(false);
     }
@@ -72,7 +48,9 @@ type Props = { consultId: string };
   }, [step]);
 
   const toggleExtra = (e: string) =>
-    setExtras((prev) => (prev.includes(e) ? prev.filter((x) => x !== e) : [...prev, e]));
+    setExtras((prev) =>
+      prev.includes(e) ? prev.filter((x) => x !== e) : [...prev, e]
+    );
 
   const Finish = () => {
     setSubmitted(true);
@@ -86,22 +64,28 @@ type Props = { consultId: string };
     setSeverity("");
     setSubmitted(false);
     setStep(1);
-  }
+  };
 
   return (
     <div className="text-slate-900">
       {/* Step 1 */}
       {step === 1 && (
         <>
-          <h2 className="mb-3 text-teal-700 font-SF Pro bold">How do you feel today?</h2>
+          <h2 className="mb-3 text-black-700 font-SF Pro bold">
+            How do you feel today?
+          </h2>
           <input
             type="text"
             placeholder="e.g., Headache, Fever, ..."
             value={symptom}
             onChange={(e) => setSymptom(e.target.value)}
-            className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm shadow-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-500"
+            className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm shadow-sm placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-cyan-400"
           />
-          <Button disabled={!symptom} onClick={() => setStep(2)} className="mt-4 w-full">
+          <Button
+            disabled={!symptom}
+            onClick={() => setStep(2)}
+            className="mt-4 w-full"
+          >
             Next
           </Button>
         </>
@@ -110,14 +94,21 @@ type Props = { consultId: string };
       {/* Step 2 */}
       {step === 2 && (
         <>
-          <h2 className="mb-3 text-lg font-semibold">How long have you had it?</h2>
+          <h2 className="mb-3 text-lg font-semibold">
+            How long have you had it?
+          </h2>
           <div className="space-y-2">
-            {['Less than a day', '1-3 days', 'More than a week'].map((d) => (
+            {["Less than a day", "1-3 days", "More than a week"].map((d) => (
               <button
                 key={d}
-                onClick={() => { setDuration(d); setStep(3); }}
+                onClick={() => {
+                  setDuration(d);
+                  setStep(3);
+                }}
                 className={`w-full rounded-xl border px-3 py-2 text-left text-sm transition ${
-                  duration === d ? 'border-teal-300 bg-teal-50 text-teal-900' : 'border-slate-200 bg-white hover:bg-slate-50'
+                  duration === d
+                    ? "border-teal-300 bg-teal-50 text-teal-900"
+                    : "border-slate-200 bg-white hover:bg-slate-50"
                 }`}
               >
                 {d}
@@ -132,12 +123,17 @@ type Props = { consultId: string };
         <>
           <h2 className="mb-3 text-lg font-semibold">How severe is it?</h2>
           <div className="space-y-2">
-            {['Mild', 'Moderate', 'Severe'].map((s) => (
+            {["Mild", "Moderate", "Severe"].map((s) => (
               <button
                 key={s}
-                onClick={() => { setSeverity(s); setStep(4); }}
+                onClick={() => {
+                  setSeverity(s);
+                  setStep(4);
+                }}
                 className={`w-full rounded-xl border px-3 py-2 text-left text-sm transition ${
-                  severity === s ? 'border-teal-300 bg-teal-50 text-teal-900' : 'border-slate-200 bg-white hover:bg-slate-50'
+                  severity === s
+                    ? "border-teal-300 bg-teal-50 text-teal-900"
+                    : "border-slate-200 bg-white hover:bg-slate-50"
                 }`}
               >
                 {s}
@@ -152,32 +148,66 @@ type Props = { consultId: string };
         <>
           <h2 className="mb-3 text-lg font-semibold">Any other symptoms?</h2>
           <div className="space-y-2">
-            {['Fever', 'Cough', 'Nausea', 'Dizziness'].map((e) => (
-              <label key={e} className="flex cursor-pointer items-center gap-2 text-sm">
-                <input type="checkbox" checked={extras.includes(e)} onChange={() => toggleExtra(e)} />
+            {["Fever", "Cough", "Nausea", "Dizziness"].map((e) => (
+              <label
+                key={e}
+                className="flex cursor-pointer items-center gap-2 text-sm"
+              >
+                <input
+                  type="checkbox"
+                  checked={extras.includes(e)}
+                  onChange={() => toggleExtra(e)}
+                />
                 {e}
               </label>
             ))}
           </div>
-          <Button onClick={Finish} className="mt-4 w-full">Finish</Button>
+          <Button onClick={Finish} className="mt-4 w-full">
+            Finish
+          </Button>
         </>
       )}
 
-    
       {/* Step 5 */}
       {step === 5 && submitted && (
         <>
           <h2 className="mb-3 text-lg font-semibold">Your Summary</h2>
-          <p className="text-sm text-slate-700"><strong>Symptom:</strong> {symptom}</p>
-          <p className="text-sm text-slate-700"><strong>Duration:</strong> {duration}</p>
-          <p className="text-sm text-slate-700"><strong>Severity:</strong> {severity}</p>
-          <p className="text-sm text-slate-700"><strong>Other Symptoms:</strong> {extras.join(', ') || 'None'}</p>
-
+          <p className="text-sm text-slate-700">
+            <strong>Symptom:</strong> {symptom}
+          </p>
+          <p className="text-sm text-slate-700">
+            <strong>Duration:</strong> {duration}
+          </p>
+          <p className="text-sm text-slate-700">
+            <strong>Severity:</strong> {severity}
+          </p>
+          <p className="text-sm text-slate-700">
+            <strong>Other Symptoms:</strong> {extras.join(", ") || "None"}
+          </p>{" "}
+          <div className="mt-4 p-3 rounded-lg bg-gray-200 border border-gray-300 text-sm text-gray-500">
+            ⚠️ This is not a diagnosis. Based on your input, you may want to{" "}
+            <span className="text-cyan-400">start a consultation </span> with a
+            doctor for further evaluation.
+            <div className="mt-2">
+              {loading && <span>🔄 Analyzing your symptoms...</span>}
+              {!loading && triageResult && (
+                <span>
+                  Recommended specialty:{" "}
+                  <span className="text-cyan">
+                    {triageResult.specialty}
+                  </span>
+                </span>
+              )}
+            </div>
+          </div>
           <div className="mt-5 flex justify-end gap-3">
-            <button onClick={onClose} className="rounded-xl bg-slate-200 px-4 py-2 text-sm font-medium text-slate-800">
+            <button
+              onClick={onClose}
+              className="rounded-xl bg-slate-200 px-4 py-2 text-sm font-medium text-slate-800 "
+            >
               Close
             </button>
-            <button onClick={onStartConsult} className="rounded-xl bg-teal-500 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-600">
+            <button className="rounded-xl bg-cyan-400 px-4 py-2 text-sm font-semibold text-white hover:bg-cyan-300">
               Start Consult
             </button>
           </div>
