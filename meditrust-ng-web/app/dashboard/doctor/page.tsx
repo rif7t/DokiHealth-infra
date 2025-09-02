@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import RequireAuth from "@/components/RequireAuth";
+import { subscribe } from "@/lib/eventBus";
 import MobileOnly from "@/components/MobileOnly";
 import ModalCard from "@/components/ModalCard";
 import ConsultationSummaryCard from "@/components/consults/ConsultationSummaryCard";
@@ -33,6 +34,8 @@ const banks = [
   "Zenith Bank",
 ];
 
+
+
 export default function DoctorDashboard() {
   const router = useRouter();
   const [profile, setDoctorProfile] = useState<any>(null);
@@ -44,6 +47,7 @@ export default function DoctorDashboard() {
   const [updating, setUpdating] = useState(false);
   const [showAccountModal, setShowAccountModal] = useState(false);
   const [showPayouts, setShowPayouts] = useState(false);
+  const [assignedFlag, setAssignedFlag] = useState<number>(0);
 
   useEffect(() => {
     (async () => {
@@ -59,10 +63,17 @@ export default function DoctorDashboard() {
       const data = await res.json();
       if (data?.profile) {
         setDoctorProfile(data.profile);
-        setAcctProfile(data.profile); // ✅ sync acctProfile with profile
+        setAcctProfile(data.profile); // sync acctProfile with profile
       }
     })();
   }, []);
+
+  useEffect(() => {
+    const unsubscribe = subscribe((val) => setAssignedFlag(val));
+    return unsubscribe;
+  }, []);
+
+  
 
   const doctor = {
     name: profile ? `Dr. ${profile.first_name} ${profile.last_name}` : "",
@@ -101,7 +112,12 @@ export default function DoctorDashboard() {
     { id: 101, patientName: "Sarah Wilson", reason: "New patient sign-up" };
     
   
+  
 
+  //handles new assignment notfication
+  const handleAssignedChange = (isAssigned: boolean) => {
+    setAssignedFlag(isAssigned ? 1 : 0);
+  };
   const payouts = [
     { id: 1, date: "Aug 1, 2025", amount: "₦50,000", status: "Paid" },
     { id: 2, date: "Aug 15, 2025", amount: "₦75,000", status: "Pending" },
@@ -216,11 +232,11 @@ export default function DoctorDashboard() {
                   className="relative p-3 rounded-full bg-white border border-slate-200 text-slate-600 hover:bg-slate-100 shadow-md"
                 >
                   <Bell size={20} />
-                  {/* {alerts.length > 0 && (
+                  { (
                     <span className="absolute top-1 right-1 inline-flex items-center justify-center px-1.5 py-0.5 text-[10px] font-bold leading-none text-white transform bg-red-500 rounded-full">
-                      {alerts.length}
+                      {assignedFlag}
                     </span>
-                  )} */}
+                  )}
                 </button>
 
                 <button

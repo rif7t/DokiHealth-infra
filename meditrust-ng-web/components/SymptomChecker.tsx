@@ -1,9 +1,13 @@
 "use client";
 import { useState, useEffect } from "react";
 import { TriageResponse } from "@/app/api/triage/route";
+import { ConsultAssignRequest } from "@/app/api/assign-consult-and-pay/route";
 import Button from "./ui/Button";
 import { supabase } from "@/lib/supabaseClient";
+import { publish } from "@/lib/eventBus";
 
+let consult_id_cache = "";
+let consult_specialty = "";
 export default function SymptomChecker() {
   const [step, setStep] = useState(1);
   const [symptom, setSymptom] = useState("");
@@ -12,8 +16,12 @@ export default function SymptomChecker() {
   const [extras, setExtras] = useState<string[]>([]);
   const [submitted, setSubmitted] = useState(false);
   const [triageResult, setTriageResult] = useState<TriageResponse | null>(null);
+  const [triageID, setTriageID] = useState<string>("");
+  const [consultRequest, setConsultRequest] = useState<ConsultAssignRequest>();
   const [loading, setLoading] = useState(false);
+  const [accessToken, setToken] = useState("");
 
+  let triage_response = "";
   const handleTriage = async () => {
     const combinedSymptoms = `${symptom}, ${duration}, ${severity}${
       extras.length ? ", " + extras.join(", ") : ""
@@ -24,6 +32,8 @@ export default function SymptomChecker() {
         data: { session },
       } = await supabase.auth.getSession();
       if (!session) return;
+      setToken(session.access_token);
+      //console.log("ACCESSTOKEN: ", accessToken);
       setLoading(true);
       const res = await fetch("/api/triage", {
         method: "POST",
@@ -36,6 +46,8 @@ export default function SymptomChecker() {
       if (!res.ok) throw new Error(await res.text());
       const result: TriageResponse = await res.json();
       setTriageResult(result);
+      setTriageID(result.triage_id);
+      console.log("TRIAGE:", triage_response);
     } catch (e) {
       console.error("Triage API error:", e);
     } finally {
@@ -66,6 +78,56 @@ export default function SymptomChecker() {
     setStep(1);
   };
 
+  const onStartConsult = async () => {
+    console.log("Repsonse: ", triage_response);
+     try{
+      
+        const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session) return;
+      //console.log("Proxy token:", accessToken);
+      const res1 = await fetch("/api/consult-request", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({ triage_id: triageID }),
+      });
+       if (!res1.ok) throw new Error(await res1.text());
+      let output  = await res1.json();
+      setConsultRequest(output);
+      
+
+      
+      const res2 = await fetch("/api/assign-consult-and-pay", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          consult_id: output.consult_id,
+          specialty: output.specialty,
+        }),
+      });;
+
+      if (!res2.ok) throw new Error(await res2.text());
+      const result2 = await res2.json();
+      console.log("status of consult: ", result2.status);
+      console.log("doctor assigned: ", result2.doctor_id);
+
+      // check status and act
+      if (result2.status === "requested") {
+          publish(1);
+      }else{
+        publish(0);
+      }
+     }catch(e){
+      console.log('Consult Request Error: ', e)
+     }
+  };
   return (
     <div className="text-slate-900">
       {/* Step 1 */}
@@ -207,7 +269,7 @@ export default function SymptomChecker() {
             >
               Close
             </button>
-            <button className="rounded-xl bg-cyan-400 px-4 py-2 text-sm font-semibold text-white hover:bg-cyan-300">
+            <button onClick={onStartConsult} className="rounded-xl bg-cyan-400 px-4 py-2 text-sm font-semibold text-white hover:bg-cyan-300">
               Start Consult
             </button>
           </div>
