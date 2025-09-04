@@ -14,8 +14,9 @@ export default function SignInPage() {
   const [success, setSuccess] = useState(false);
 
   const router = useRouter();
+  const isLoading = signInLoading || signUpLoading;
 
-  // sign in flow
+  // ---- SIGN IN ----
   const handleSignIn = async () => {
     if (!email || !password) {
       setErrorMessage("Email and password required");
@@ -24,7 +25,11 @@ export default function SignInPage() {
     }
 
     setSignInLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
 
     if (error) {
       setErrorMessage(error.message);
@@ -33,10 +38,7 @@ export default function SignInPage() {
       return;
     }
 
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-
+    const session = data.session;
     if (!session) {
       setErrorMessage("Could not start session");
       setErrorModal(true);
@@ -44,31 +46,32 @@ export default function SignInPage() {
       return;
     }
 
-     // success path → show ✅ first
-  setSuccess(true);
+    // Show success state ⭐
+    setSuccess(true);
 
-  setTimeout(async () => {
-    const { data: profile } = await supabase
-      .from("profile")
-      .select("*")
-      .eq("id", session.user.id)
-      .maybeSingle();
+    setTimeout(async () => {
+      const { data: profile } = await supabase
+        .from("profile")
+        .select("*")
+        .eq("id", session.user.id)
+        .maybeSingle();
 
-    if (!profile) {
-      router.replace("/profile");
-    } else if (profile.role === "doctor") {
-      router.replace("/dashboard/doctor");
-    } else {
-      router.replace("/dashboard/patient");
-    }
+      if (!profile) {
+        router.replace("/profile");
+      } else if (profile.role === "doctor") {
+        router.replace("/dashboard/doctor");
+      } else if (profile.role === "patient") {
+        router.replace("/dashboard/patient");
+      } else {
+        router.replace("/profile"); // fallback
+      }
 
-    // finally clear loading AFTER redirect
-    setSignInLoading(false);
-    setSuccess(false);
-  }, 1200);
+      setSignInLoading(false);
+      setSuccess(false);
+    }, 1200);
   };
 
-  // sign up flow
+  // ---- SIGN UP ----
   const handleSignUp = async () => {
     if (!email || !password) {
       setErrorMessage("Email and password required");
@@ -77,7 +80,8 @@ export default function SignInPage() {
     }
 
     setSignUpLoading(true);
-    const { error } = await supabase.auth.signUp({ email, password });
+
+    const { data, error } = await supabase.auth.signUp({ email, password });
 
     if (error) {
       setErrorMessage(error.message);
@@ -86,12 +90,17 @@ export default function SignInPage() {
       return;
     }
 
-    // after creating account → profile onboarding
-    router.replace("/profile");
+    if (data.session) {
+      // User is logged in immediately (no email confirmation required)
+      router.replace("/profile");
+    } else {
+      // Email confirmation flow
+      setErrorMessage("Check your email to confirm your account.");
+      setErrorModal(true);
+    }
+
     setSignUpLoading(false);
   };
-
-  const isLoading = signInLoading || signUpLoading;
 
   return (
     <div className="relative min-h-screen flex items-center justify-center px-6 bg-gradient-to-br from-white to-slate-100 overflow-hidden">
@@ -157,27 +166,26 @@ export default function SignInPage() {
         </div>
       </div>
 
-    {/* Full-screen loading overlay */}
-    {isLoading && (
-      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center z-50 animate-fade-slide-up">
-        {!success ? (
-          <>
-            <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-white mb-6"></div>
-            <p className="text-white text-lg font-semibold">
-              {signInLoading
-                ? "Signing you in..."
-                : "Creating your account..."}
-            </p>
-          </>
-        ) : (
-          <>
-            <div className="text-6xl text-green-400 mb-4 animate-bounce">⭐</div>
-            <p className="text-white text-lg font-semibold">Staying on top of your health - we love it!</p>
-          </>
-        )}
-      </div>
-    )}
-
+      {/* Full-screen loading overlay */}
+      {isLoading && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center z-50 animate-fade-slide-up">
+          {!success ? (
+            <>
+              <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-white mb-6"></div>
+              <p className="text-white text-lg font-semibold">
+                {signInLoading ? "Signing you in..." : "Creating your account..."}
+              </p>
+            </>
+          ) : (
+            <>
+              <div className="text-6xl text-green-400 mb-4 animate-bounce">⭐</div>
+              <p className="text-white text-lg font-semibold">
+                Staying on top of your health - we love it!
+              </p>
+            </>
+          )}
+        </div>
+      )}
 
       {/* Error Modal */}
       {errorModal && (
