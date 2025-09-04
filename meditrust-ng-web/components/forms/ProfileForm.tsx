@@ -159,7 +159,7 @@ export default function ProfileForm() {
     </>
   )}
 
-  <Button type="submit" isLoading={loading}>
+  <Button type="submit" disabled={loading}>
     Save Profile
   </Button>
 </form>
