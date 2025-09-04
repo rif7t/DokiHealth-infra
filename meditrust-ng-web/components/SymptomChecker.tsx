@@ -119,11 +119,11 @@ export default function SymptomChecker() {
       console.log("doctor assigned: ", result2.doctor_id);
 
       // check status and act
-      if (result2.status === "requested") {
-          publish(1);
-      }else{
-        publish(0);
-      }
+      // if (result2.status === "requested") {
+      //     publish(1);
+      // }else{
+      //   publish(0);
+      // }
      }catch(e){
       console.log('Consult Request Error: ', e)
      }
