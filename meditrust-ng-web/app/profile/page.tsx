@@ -1,267 +1,360 @@
 "use client";
-import RequireAuth from "@/components/RequireAuth";
-import MobileOnly from "@/components/MobileOnly";
-import BackgroundLayout from "@/components/BackgroundLayout";
-import SuccessModal from "@/components/SuccessModal";
-import TextField from "@/components/ui/TextField";
-import Button from "@/components/ui/Button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
-import {
-  User as UserIcon,
-  Phone,
-  ShieldCheck,
-  FileText,
-  CreditCard,
-} from "lucide-react";
-import { useEffect, useState } from "react";
+
+import { useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
+import { SPECIALIZATIONS } from "@/lib/constants";
+import { KeyboardDismissWrapper } from "@/components/KeyboardDismissWrapper";
 
-const specialties = ["General Practice", "Pediatrics", "Cardiology", "Dermatology"];
-const banks = ["Access Bank", "United Bank of Africa", "Wema/Alat", "Zenith Bank"];
-const titles = ["Mr", "Mrs", "Miss"]; // Doctors automatically get "Dr"
-const genders = ["Male", "Female"];
-
-export default function ProfileContent() {
+export default function CreateProfile() {
   const router = useRouter();
-  const [profile, setProfile] = useState<any>({});
-  const [isDoctor, setIsDoctor] = useState(false);
-  const [showModal, setShowModal] = useState(false);
 
-  // Load profile
-  useEffect(() => {
-    (async () => {
+  const [step, setStep] = useState(1);
+  const [role, setRole] = useState<"doctor" | "patient" | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Common fields
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [phone, setPhone] = useState("");
+
+  // Patient-only
+  const [dob, setDob] = useState("");
+  const [emergencyContact, setEmergencyContact] = useState("");
+  const [medicalHistory, setMedicalHistory] = useState(""); // ⚠️ not in DB yet
+
+  // Doctor-only
+  const [licenseNumber, setLicenseNumber] = useState("");
+  const [specialization, setSpecialization] = useState("");
+  const [experience, setExperience] = useState("");
+  const [doctorBio, setDoctorBio] = useState(""); // ⚠️ not in DB yet
+  const [accountNumber, setAccountNumber] = useState("");
+  const [bank, setBank] = useState("");
+
+  const handleRoleSelect = (r: "doctor" | "patient") => {
+    setRole(r);
+  };
+
+  const saveProfile = async () => {
+    if (!role) return;
+
+    setLoading(true);
+    setError(null);
+
+    try {
       const {
         data: { session },
       } = await supabase.auth.getSession();
-      if (!session) return;
-      const res = await fetch("/api/profile", {
-        headers: { Authorization: `Bearer ${session.access_token}` },
-      });
-      const data = await res.json();
-      if (data?.profile) {
-        setProfile(data.profile);
-        setIsDoctor(data.profile.role === "doctor");
+      if (!session) throw new Error("Not signed in");
+
+      const payload: any = {
+        role,
+        first_name: firstName,
+        last_name: lastName,
+        phone_number: phone,
+      };
+
+      if (role === "patient") {
+        payload.date_of_birth = dob;
+        payload.emergency_contact = emergencyContact;
+        // medicalHistory not in DB yet ⚠️
+      } else if (role === "doctor") {
+        payload.license_number = licenseNumber;
+        payload.specialty = specialization;
+        payload.experience = experience;
+        // doctorBio not in DB yet ⚠️
       }
-    })();
-  }, []);
 
-  const resetForm = (doctor: boolean) => {
-    setProfile(doctor ? { title: "Dr" } : {}); // default title for doctors
+      const res = await fetch("/api/profile", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ profile: payload, isDoctor: role === "doctor" }),
+      });
+
+      const data = await res.json();
+      if (data.ok) {
+        setShowSuccess(true);
+        setStep(3); // ✅ move to final step
+      } else {
+        throw new Error(data.error || "Failed to save profile");
+      }
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const save = async () => {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    if (!session) return;
-    const res = await fetch("/api/profile", {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${session.access_token}`,
-      },
-      body: JSON.stringify({ profile, isDoctor }),
-    });
-    const data = await res.json();
-    if (data.ok) setShowModal(true);
-    else alert(data.error || "Error saving profile");
+  const goToDashboard = () => {
+    setShowSuccess(false);
+    router.replace(role === "doctor" ? "/dashboard/doctor" : "/dashboard/patient");
   };
 
-  const continueToDash = () => {
-    setShowModal(false);
-    router.replace(isDoctor ? "/dashboard/doctor" : "/dashboard/patient");
+  // Utility: return correct style for step circle + label
+  const stepClasses = (i: number) => {
+    if (step === i) return "bg-blue-500 text-white"; // active
+    if (step > i) return "bg-green-500 text-white"; // completed
+    return "bg-slate-200 text-slate-600"; // pending
+  };
+
+  const labelClasses = (i: number) => {
+    if (step === i) return "text-blue-600 font-semibold";
+    if (step > i) return "text-green-600 font-semibold";
+    return "text-slate-500";
   };
 
   return (
-    <MobileOnly>
-      <RequireAuth>
-        <BackgroundLayout>
-          <div className="mx-auto flex h-[100dvh] max-w-md items-center justify-center p-4">
-            <Card className="w-full">
-              <CardHeader>
-                <CardTitle>Create Profile</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Role segmented control */}
-                <div className="rounded-xl border border-slate-200 bg-slate-50 p-1">
-                  <div className="grid grid-cols-2">
-                    <button
-                      type="button"
-                      className={`rounded-lg px-3 py-2 text-sm font-medium ${
-                        !isDoctor ? "bg-white text-slate-900 shadow-sm" : "text-slate-600"
-                      }`}
-                      onClick={() => {
-                        setIsDoctor(false);
-                        resetForm(false);
-                      }}
-                    >
-                      Patient
-                    </button>
-                    <button
-                      type="button"
-                      className={`rounded-lg px-3 py-2 text-sm font-medium ${
-                        isDoctor ? "bg-white text-slate-900 shadow-sm" : "text-slate-600"
-                      }`}
-                      onClick={() => {
-                        setIsDoctor(true);
-                        resetForm(true);
-                      }}
-                    >
-                      Doctor
-                    </button>
-                  </div>
-                </div>
+    <div className="relative min-h-dvh bg-gradient-to-br from-white to-slate-100 flex items-center justify-center px-4">
+      {/* Floating medical icons */}
+      <div className="absolute inset-0 pointer-events-none opacity-10 text-4xl">
+        <div className="absolute top-10 left-10 animate-bounce">🩺</div>
+        <div className="absolute top-20 right-12 animate-pulse">💊</div>
+        <div className="absolute bottom-28 left-16 animate-pulse">🏥</div>
+        <div className="absolute bottom-12 right-10 animate-bounce">❤️</div>
+        <div className="absolute top-1/2 left-5 animate-pulse">🔬</div>
+      </div>
 
-                {/* Title Dropdown (Patients only) */}
-                {!isDoctor && (
-                  <div className="relative">
-                    <FileText className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
-                    <select
-                      value={profile?.title || ""}
-                      onChange={(e) => setProfile({ ...profile, title: e.target.value })}
-                      className="w-full appearance-none rounded-lg border border-gray-300 bg-white pl-10 pr-4 py-2 text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#00CFC1]"
-                    >
-                      <option value="">Select Title</option>
-                      {titles.map((t) => (
-                        <option key={t} value={t}>
-                          {t}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
+      <div className="relative z-10 w-full max-w-lg bg-white/90 backdrop-blur rounded-3xl shadow-xl p-8 border border-slate-200">
+        <h1 className="text-2xl font-bold text-blue-700 text-center mb-4">
+          Create Your Profile
+        </h1>
 
-                {/* Common fields */}
-                <TextField
-                  placeholder="First Name"
-                  value={profile?.first_name || ""}
-                  onChange={(e) => setProfile({ ...profile, first_name: e.target.value })}
-                  icon={UserIcon}
+        {/* Progress Steps */}
+        <div className="flex justify-between mb-8">
+          {["Role", "Info", "Complete"].map((label, i) => (
+            <div key={label} className="flex-1 text-center relative">
+              <div
+                className={`w-8 h-8 mx-auto rounded-full flex items-center justify-center font-semibold ${stepClasses(
+                  i + 1
+                )}`}
+              >
+                {i + 1}
+              </div>
+              <div className={`mt-2 text-sm ${labelClasses(i + 1)}`}>{label}</div>
+
+              {/* Connector line */}
+              {i < 2 && (
+                <div
+                  className={`absolute top-4 left-1/2 w-full h-0.5 -z-10 ${
+                    step > i + 1 ? "bg-green-500" : "bg-slate-200"
+                  }`}
                 />
-                <TextField
-                  placeholder="Last Name"
-                  value={profile?.last_name || ""}
-                  onChange={(e) => setProfile({ ...profile, last_name: e.target.value })}
-                  icon={UserIcon}
-                />
+              )}
+            </div>
+          ))}
+        </div>
 
-                {/* Age + Gender row */}
-                <div className="grid grid-cols-2 gap-3">
-                  <TextField
-                    placeholder="Age"
-                    type="number"
-                    maxLength={2}
-                    value={profile?.age || ""}
-                    onChange={(e) => {
-                      const val = e.target.value.replace(/\D/g, "");
-                      if (val.length <= 2) setProfile({ ...profile, age: val });
-                    }}
-                    icon={FileText}
-                  />
-                  <div className="relative">
-                    <UserIcon className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
-                    <select
-                      value={profile?.gender || ""}
-                      onChange={(e) => setProfile({ ...profile, gender: e.target.value })}
-                      className="w-full appearance-none rounded-lg border border-gray-300 bg-white pl-10 pr-4 py-2 text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#00CFC1]"
-                    >
-                      <option value="">Gender</option>
-                      {genders.map((g) => (
-                        <option key={g} value={g}>
-                          {g}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                {/* Phone number (max 11 digits) */}
-                <TextField
-                  placeholder="Phone Number"
-                  type="tel"
-                  value={profile?.phone_number || ""}
-                  onChange={(e) => {
-                    const val = e.target.value.replace(/\D/g, "");
-                    if (val.length <= 11) {
-                      setProfile({ ...profile, phone_number: val });
-                    }
-                  }}
-                  icon={Phone}
-                />
-
-                {/* Doctor-specific fields */}
-                {isDoctor && (
-                  <>
-                    {/* Specialty Dropdown */}
-                    <div className="relative">
-                      <ShieldCheck className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
-                      <select
-                        value={profile?.specialty || ""}
-                        onChange={(e) =>
-                          setProfile({
-                            ...profile,
-                            specialty: e.target.value,
-                          })
-                        }
-                        className="w-full appearance-none rounded-lg border border-gray-300 bg-white pl-10 pr-4 py-2 text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#00CFC1]"
-                      >
-                        <option value="">Select Specialty</option>
-                        {specialties.map((s) => (
-                          <option key={s} value={s}>
-                            {s}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    {/* Bank Account Number (max 11 digits) */}
-                    <TextField
-                      placeholder="Account Number"
-                      type="tel"
-                      value={profile?.account_number || ""}
-                      onChange={(e) => {
-                        const val = e.target.value.replace(/\D/g, "");
-                        if (val.length <= 11) {
-                          setProfile({ ...profile, account_number: val });
-                        }
-                      }}
-                      icon={CreditCard}
-                    />
-
-                    {/* Bank Dropdown */}
-                    <div className="relative">
-                      <CreditCard className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
-                      <select
-                        value={profile?.bank || ""}
-                        onChange={(e) => setProfile({ ...profile, bank: e.target.value })}
-                        className="w-full appearance-none rounded-lg border border-gray-300 bg-white pl-10 pr-4 py-2 text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#00CFC1]"
-                      >
-                        <option value="">Select Bank</option>
-                        {banks.map((b) => (
-                          <option key={b} value={b}>
-                            {b}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  </>
-                )}
-
-                <Button onClick={save} className="w-full">
-                  Save Profile
-                </Button>
-              </CardContent>
-            </Card>
+        {/* Step 1: Role selection */}
+        {step === 1 && (
+          <div>
+            <p className="mb-6 text-center text-blue-500">I am a...</p>
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <button
+                onClick={() => handleRoleSelect("patient")}
+                className={`p-6 rounded-2xl border-2 ${
+                  role === "patient"
+                    ? "border-blue-500 bg-blue-500 text-white"
+                    : "border-slate-200 bg-blue-50 text-blue-600"
+                }`}
+              >
+                🧑‍💼 Patient
+              </button>
+              <button
+                onClick={() => handleRoleSelect("doctor")}
+                className={`p-6 rounded-2xl border-2 ${
+                  role === "doctor"
+                    ? "border-blue-500 bg-blue-500 text-white"
+                    : "border-slate-200 bg-blue-50 text-blue-600"
+                }`}
+              >
+                👨‍⚕️ Doctor
+              </button>
+            </div>
+            <button
+              disabled={!role}
+              onClick={() => setStep(2)}
+              className="w-full py-3 rounded-xl bg-gradient-to-r from-blue-500 to-blue-700 text-white font-semibold shadow disabled:opacity-50"
+            >
+              Continue
+            </button>
           </div>
+        )}
 
-          <SuccessModal
-            show={showModal}
-            onClose={continueToDash}
-            message="Profile saved successfully!"
-          />
-        </BackgroundLayout>
-      </RequireAuth>
-    </MobileOnly>
+        {/* Step 2: Info form */}
+        {step === 2 && (
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              saveProfile();
+            }}
+            className="space-y-4"
+          >
+            <input
+              type="text"
+              placeholder="First Name"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              required
+              className="w-full rounded-xl border border-slate-300 p-4 text-black"
+            />
+            <input
+              type="text"
+              placeholder="Last Name"
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              required
+              className="w-full rounded-xl border border-slate-300 p-4 text-black"
+            />
+            <input
+              type="tel"
+              placeholder="Phone Number"
+              value={phone}
+              onChange={(e) => {
+                const digits = e.target.value.replace(/\D/g, ""); // keep only numbers
+                if (digits.length <= 11) {
+                  setPhone(digits);
+                }
+              }}
+              required
+              maxLength={11} // optional extra safeguard
+              className="w-full rounded-xl border border-slate-300 p-4 text-black"
+            />
+
+
+            {role === "patient" && (
+              <>
+                <input
+                  type="date"
+                  value={dob}
+                  onChange={(e) => setDob(e.target.value)}
+                  className="w-full rounded-xl border border-slate-300 p-4"
+                />
+                <input
+                  type="text"
+                  placeholder="Emergency Contact"
+                  value={emergencyContact}
+                  onChange={(e) => setEmergencyContact(e.target.value)}
+                  className="w-full rounded-xl border border-slate-300 p-4"
+                />
+                <textarea
+                  placeholder="Medical History (optional)"
+                  value={medicalHistory}
+                  onChange={(e) => setMedicalHistory(e.target.value)}
+                  className="w-full rounded-xl border border-slate-300 p-4"
+                />
+              </>
+            )}
+
+            {role === "doctor" && (
+              <>
+                <input
+                  type="text"
+                  placeholder="Medical License Number"
+                  value={licenseNumber}
+                  onChange={(e) => setLicenseNumber(e.target.value)}
+                  className="w-full rounded-xl border border-slate-300 p-4 text-black"
+              />
+              {/* Specialization Dropdown */}
+                <select
+                  value={specialization}
+                  onChange={(e) => setSpecialization(e.target.value)}
+                  className="w-full rounded-xl border border-slate-300 p-4 text-slate-900"
+                >
+                  <option value="">Select Specialization</option>
+                  {SPECIALIZATIONS.map((s) => (
+                    <option key={s.value} value={s.value}>
+                      {s.label}
+                    </option>
+                  ))}
+                </select>
+
+              {/* 🔹 New: Account Number (limit 11 digits) */}
+                <input
+                  type="tel"
+                  placeholder="Account Number"
+                  value={accountNumber}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/\D/g, ""); // only digits
+                    if (val.length <= 11) setAccountNumber(val);
+                  }}
+                  className="w-full rounded-xl border border-slate-300 p-4"
+                />
+                {/* 🔹 Bank Dropdown */}
+                <select
+                  value={bank}
+                  onChange={(e) => setBank(e.target.value)}
+                  className="w-full rounded-xl border border-slate-300 p-4 bg-white text-slate-700"
+                  required
+                >
+                  <option value="">Select Bank</option>
+                  <option value="Access Bank">Access Bank</option>
+                  <option value="United Bank for Africa">United Bank for Africa (UBA)</option>
+                  <option value="Wema/Alat">Wema / Alat</option>
+                  <option value="Zenith Bank">Zenith Bank</option>
+                </select>
+                
+                <input
+                  type="number"
+                  placeholder="Years of Experience"
+                  value={experience}
+                  onChange={(e) => setExperience(e.target.value)}
+                  className="w-full rounded-xl border border-slate-300 p-4 text-black"
+                />
+                <textarea
+                  placeholder="Professional Bio"
+                  value={doctorBio}
+                  onChange={(e) => setDoctorBio(e.target.value)}
+                  className="w-full rounded-xl border border-slate-300 p-4 text-black"
+                />
+              </>
+            )}
+
+            {error && <p className="text-red-500 text-center">{error}</p>}
+
+            <div className="flex gap-4">
+              <button
+                type="button"
+                onClick={() => setStep(1)}
+                className="flex-1 py-3 rounded-xl bg-slate-200 text-slate-700"
+              >
+                Back
+              </button>
+              <button
+                type="submit"
+                disabled={loading}
+                className="flex-1 py-3 rounded-xl bg-gradient-to-r from-blue-500 to-blue-700 text-white font-semibold shadow disabled:opacity-50"
+              >
+                {loading ? "Saving..." : "Create Profile"}
+              </button>
+            </div>
+          </form>
+        )}
+
+        {/* Step 3: Success */}
+        {step === 3 && showSuccess && (
+          <div className="text-center">
+            <div className="text-5xl mb-4"></div>
+            <h2 className="text-xl font-semibold mb-2 text-blue-500">
+              Profile Created Successfully!
+            </h2>
+            <p className="text-slate-600 mb-6">
+              Your account is ready. You can now continue to your dashboard.
+            </p>
+            <button
+              onClick={goToDashboard}
+              className="w-full py-3 rounded-xl bg-gradient-to-r from-green-500 to-green-600 text-white font-semibold shadow"
+            >
+              Continue to Dashboard
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
   );
 }

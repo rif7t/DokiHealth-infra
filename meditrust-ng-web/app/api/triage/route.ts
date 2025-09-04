@@ -1,3 +1,4 @@
+import { Data } from "framer/data/Data.js";
 import { NextRequest, NextResponse } from "next/server";
 
 export interface TriageRequest {
@@ -20,7 +21,7 @@ export async function POST(req: NextRequest) {
   try {
     //const body = await req.json().catch(()=>({}));
     const { symptoms }: TriageRequest = await req.json();
-    console.log(symptoms);
+   
 
     if (!symptoms || typeof symptoms !== "string") {
       return NextResponse.json({ error: "Invalid symptoms" }, { status: 400 });
@@ -45,6 +46,10 @@ export async function POST(req: NextRequest) {
     }
 
     const data: TriageResponse = await res.json();
+    
+    const dataStr : string = JSON.stringify(data);
+
+    console.log("TRIAGE ID RESPONSE", dataStr);
 
     return NextResponse.json(data);
   } catch (err) {

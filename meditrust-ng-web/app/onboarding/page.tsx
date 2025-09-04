@@ -1,162 +1,116 @@
 "use client";
-import { useState, useEffect } from "react";
-import MobileOnly from "@/components/MobileOnly";
-import BackgroundLayout from "@/components/BackgroundLayout";
+
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Cookies from "js-cookie";
-import { ArrowRight } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import "./onboarding.css"; // custom CSS for silhouettes & animations
 
-const slides = ["/onboarding_1.svg", "/onboarding_2.svg", "/onboarding_3.svg"];
+export default function OnboardingPage() {
+  const [currentSlide, setCurrentSlide] = useState(0);
+   const router = useRouter();
+  const totalSlides = 5;
 
-
-export default function Onboarding() {
-  const [step, setStep] = useState(0);
-  const router = useRouter();
-
-  const finish = () => {
-    Cookies.set("seenOnboarding", "true", { expires: 365 });
-    try {
-      localStorage.setItem("seenOnboarding", "true");
-    } catch {}
-    router.replace("/sign-in");
-
-     return (
-      <div className="w-full h-full">  {/* prevents height reflow */}
-        {/* page content */}
-      </div>
-    );
-  };
-
-  // Right Arrow key: next slide or finish on last slide
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "ArrowRight") {
-        if (step === slides.length - 1) finish();
-        else setStep((s) => Math.min(s + 1, slides.length - 1));
-      }
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [step]); // depends on step so it uses the latest
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % totalSlides);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
+  const slides = [
+    {
+      icon: "📱",
+      title: "Download & Register",
+      desc: "Get started in minutes. Download MediTrust, create your secure profile, and verify your identity with our simple onboarding process.",
+    },
+    {
+      icon: "🔍",
+      title: "Find Your Doctor",
+      desc: "Browse our network of certified healthcare professionals. Filter by specialty, availability, language, and ratings to find the perfect match.",
+    },
+    {
+      icon: "💬",
+      title: "Book Consultation",
+      desc: "Schedule your appointment at your convenience. Choose from video calls, voice calls, or secure messaging based on your needs.",
+    },
+    {
+      icon: "🩺",
+      title: "Get Expert Care",
+      desc: "Connect with your doctor from anywhere. Receive professional medical advice, prescriptions, and follow-up care plans.",
+    },
+    {
+      icon: "📋",
+      title: "Track Your Health",
+      desc: "Access your medical records, track symptoms, set medication reminders, and monitor your health journey over time.",
+    },
+  ];
 
   return (
-    <MobileOnly>
-      <BackgroundLayout>
-        <div className="relative h-[100dvh] w-full flex flex-col overflow-hidden overscroll-none ">
-          {/* Content */}
-          <div className="flex-1 flex flex-col items-center justify-center px-4 pt-24 pb-20">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={step}
-                initial={{ x: 120, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.25, delay:0.15 }}
-                className="w-full flex flex-col items-center"
->         
-                {/* Image */}
-                <motion.img
-                  src={slides[step]}
-                  alt="Onboarding Visual"
-                  width={400}
-                  height={400}
-                  className="object-contain mt-16"
-                  initial={{ y: -20, opacity: 0 }}
-                  animate={{ y: 0, opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.25, delay:0.15 }}
-/>
+    <div className="relative min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-slate-50 to-slate-200 overflow-hidden">
+      {/* Doctor silhouettes */}
+      <div className="doctors-background">
+        <div className="doctor-silhouette doctor-1"></div>
+        <div className="doctor-silhouette doctor-2"></div>
+        <div className="doctor-silhouette doctor-3"></div>
+        <div className="doctor-silhouette doctor-4"></div>
+      </div>
 
+      {/* Content */}
+      <div className="relative z-10 max-w-3xl text-center">
+        <div className="text-3xl md:text-4xl font-bold text-blue-700 mb-6">
+          MediTrust
+        </div>
+        <h1 className="text-2xl md:text-3xl font-semibold text-slate-800 mb-8">
+          How MediTrust Works for You
+        </h1>
 
-                {/* Headline + Body */}
-                <div className="mt-4 text-center">
-                  <h1 className="text-base font-semibold text-slate-900">
-                    {step === 0 && (
-                      <>
-                        <span className="text-yellow-500">Verified</span>{" "}
-                        <span className="text-white">Doctors</span>,{" "}
-                        <span className="text-yellow-500">Real</span>{" "}
-                        <span className="text-white">Credentials</span>
-                      </>
-                    )}
-                    {step === 1 && (
-                      <>
-                        <span className="text-yellow-500">Secure</span>{" "}
-                        <span className="text-white">Payments</span>{" "}
-                        <span className="text-white">with</span>{" "}
-                        <span className="text-yellow-500">Escrow</span>
-                      </>
-                    )}
-                    {step === 2 && (
-                      <>
-                        <span className="text-yellow-500">Medicine</span>{" "}
-                        <span className="text-white">Verification</span>{" "}
-                        <span className="text-white">&</span>{" "}
-                        <span className="text-yellow-500">Tracking</span>
-                      </>
-                    )}
-                  </h1>
-
-                  <p className="mt-2 text-xs text-white max-w-sm mx-auto leading-relaxed">
-                    {step === 0 &&
-                      "All clinicians are credential-checked. Tell us how you feel and we'll get you a doctor in minutes."}
-                    {step === 1 &&
-                      "Pay in ₦aira. Your money sits safely in escrow until care is delivered."}
-                    {step === 2 &&
-                      "Scan drug codes, verify authenticity, and keep your health records all in one place."}
-                  </p>
-                </div>
-              </motion.div>
-            </AnimatePresence>
-          </div>
-
-          {/* Nav */}
-          {/* Outer container: absolute + centering */}
-<div
-  className="absolute 
-             bottom-[max(env(safe-area-inset-bottom),1rem)] 
-             left-1/2 -translate-x-1/2 
-             flex justify-center w-full "
->
-        {/* Inner container: the pill with buttons */}
-        <div className="flex items-center gap-6 bg-white/90 backdrop-blur border border-slate-200 rounded-full pl-4 pr-2 py-2 shadow-lg">
-          <button
-            className="text-slate-600 text-sm hover:text-slate-900 transition"
-            onClick={finish}
+        {/* Slider */}
+        <div className="relative w-full max-w-2xl mx-auto overflow-hidden rounded-2xl shadow-lg">
+          <div
+            className="flex transition-transform duration-500"
+            style={{ transform: `translateX(-${currentSlide * 100}%)` }}
           >
-            Skip
-          </button>
-
-          <div className="flex gap-2">
-            {slides.map((_, i) => (
-              <button
+            {slides.map((s, i) => (
+              <div
                 key={i}
-                onClick={() => setStep(i)}
-                className={`h-2 w-2 rounded-full transition-all ${
-                  i === step ? "bg-teal-500 w-4" : "bg-slate-300"
-                }`}
-                aria-label={`Slide ${i + 1}`}
-              />
+                className="min-w-full bg-white/90 backdrop-blur p-10 flex flex-col items-center"
+              >
+                <div className="w-28 h-28 flex items-center justify-center rounded-full bg-gradient-to-br from-blue-400 to-blue-700 text-5xl text-white shadow-lg mb-6">
+                  {s.icon}
+                </div>
+                <h3 className="text-xl font-semibold text-slate-800 mb-3">
+                  {s.title}
+                </h3>
+                <p className="text-slate-600 max-w-md">{s.desc}</p>
+              </div>
             ))}
           </div>
 
-          <button
-            onClick={() =>
-              step === slides.length - 1 ? finish() : setStep(step + 1)
-            }
-            className="bg-teal-500 hover:bg-teal-600 active:scale-95 text-white rounded-full p-3 shadow-md flex items-center justify-center"
-            aria-keyshortcuts="ArrowRight"
-            title="Next (→)"
-          >
-            <ArrowRight size={18} />
+          {/* Dots */}
+          <div className="flex justify-center gap-3 mt-4">
+            {slides.map((_, i) => (
+              <span
+                key={i}
+                onClick={() => setCurrentSlide(i)}
+                className={`w-3 h-3 rounded-full cursor-pointer transition-all ${
+                  currentSlide === i
+                    ? "bg-blue-500 scale-125"
+                    : "bg-blue-300/40"
+                }`}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* CTA */}
+        <div className="mt-8 flex justify-center gap-4">
+          <button onClick={() => router.push("/sign-in")} className="px-6 py-3 rounded-full bg-gradient-to-r from-blue-400 to-blue-700 text-white font-semibold shadow hover:scale-105 transition">
+            Get Started Now
+          </button>
+          <button className="px-6 py-3 rounded-full border-2 border-blue-500 text-blue-600 font-semibold hover:bg-blue-500 hover:text-white transition">
+            Learn More
           </button>
         </div>
       </div>
-
-        </div>
-      </BackgroundLayout>
-    </MobileOnly>
+    </div>
   );
 }
