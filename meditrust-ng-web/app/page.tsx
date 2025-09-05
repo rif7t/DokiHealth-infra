@@ -57,7 +57,7 @@ const handleFinish = async () => {
   };
 
     return (
-    <div className="relative min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-slate-50 to-slate-200 overflow-hidden">
+    <div className="relative min-h-screen flex flex-col items-center justify-start pt-8 bg-gradient-to-br from-slate-50 to-slate-200 overflow-hidden">
   {/* Doctor silhouettes */}
   <div className="doctors-background">
     <div className="doctor-silhouette doctor-1"></div>
@@ -69,7 +69,7 @@ const handleFinish = async () => {
   {/* Content */}
   <div className="relative z-10 justify-start w-full max-w-md sm:max-w-lg md:max-w-2xl lg:max-w-3xl px-4 text-center">
   <div className="w-full flex justify-center">
-  <div className="flex items-center -mt-6 mb-8">
+  <div className="flex items-center -mt-6 mb-6">
     <img src="/logo.png" alt="MediTrust Logo" className="w-10 h-10" />
     <span className="text-2xl font-bold text-blue-700">MediTrust</span>
   </div>
@@ -82,39 +82,49 @@ const handleFinish = async () => {
     </h1> */}
 
     {/* Slider */}
-    <div className="relative w-full overflow-hidden rounded-2xl justify-start shadow-lg">
+<div className="relative w-full max-w-5xl mx-auto overflow-hidden rounded-2xl shadow-lg 
+                h-[60vh] sm:h-[65vh] md:h-[70vh] lg:h-[75vh]">
+  <div
+    className="flex transition-transform duration-500 h-full"
+    style={{ transform: `translateX(-${currentSlide * 100}%)` }}
+  >
+    {slides.map((s, i) => (
       <div
-        className="flex transition-transform duration-500"
-        style={{ transform: `translateX(-${currentSlide * 100}%)` }}
+        key={i}
+        className="min-w-full h-full flex flex-col items-center justify-center 
+                   bg-white/90 backdrop-blur p-6"
       >
-        {slides.map((s, i) => (
-          <div
-          key={i}
-          className="min-w-full bg-white/90 backdrop-blur p-10 flex flex-col items-center justify-center min-h-[400px] sm:min-h-[450px] md:min-h-[500px]"
-        >
-          <div className="w-28 h-28 flex items-center justify-center rounded-full bg-gradient-to-br from-blue-400 to-blue-700 text-5xl text-white shadow-lg mb-6">
-            {s.icon}
-          </div>
-          <h3 className="text-xl font-semibold text-slate-800 mb-3">{s.title}</h3>
-          <p className="text-slate-600 max-w-md">{s.desc}</p>
+        <div className="w-20 h-20 md:w-28 md:h-28 flex items-center justify-center rounded-full 
+                        bg-gradient-to-br from-blue-400 to-blue-700 text-4xl md:text-6xl 
+                        text-white shadow-lg mb-6">
+          {s.icon}
         </div>
-
-        ))}
+        <h3 className="text-lg md:text-2xl font-semibold text-slate-800 mb-3">
+          {s.title}
+        </h3>
+        <p className="text-slate-600 max-w-md text-center text-sm md:text-lg">
+          {s.desc}
+        </p>
       </div>
+    ))}
+  </div>
 
-      {/* Dots */}
-      <div className="flex justify-center gap-3 mt-6 mb-2">
-        {slides.map((_, i) => (
-          <span
-            key={i}
-            onClick={() => setCurrentSlide(i)}
-            className={`w-2.5 h-2.5 sm:w-3 sm:h-4 rounded-full cursor-pointer transition-all ${
-              currentSlide === i ? "bg-blue-500 scale-125" : "bg-blue-300/40"
-            }`}
-          />
-        ))}
-      </div>
-    </div>
+  {/* Dots pinned inside */}
+  <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-3">
+    {slides.map((_, i) => (
+      <span
+        key={i}
+        onClick={() => setCurrentSlide(i)}
+        className={`w-2.5 h-2.5 rounded-full cursor-pointer transition-all ${
+          currentSlide === i ? "bg-blue-500 scale-125" : "bg-blue-300/40"
+        }`}
+      />
+    ))}
+  </div>
+</div>
+
+
+
     <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
     🛡️ Refund-Backed Escrow
   </span>
