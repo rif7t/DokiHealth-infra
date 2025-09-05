@@ -189,56 +189,159 @@ const requestConsult = async () => {
       <div className="p-4">
         {/* Symptoms/New Visit */}
         {activeTab === "symptoms" && (
-          <div className="bg-white rounded-xl shadow p-4">
-            <h2 className="text-lg font-semibold text-black mb-4">Describe Your Symptoms</h2>
-            <textarea
-             placeholder="Describe your symptoms..."
-              value={symptom}
-              onChange={(e) => setSymptom(e.target.value)}
-              className="w-full border rounded-lg text-black p-3 mb-3"
-            />
-            <select className="w-full border rounded-lg  text-black p-3 mb-3">
-              <option value="">Select duration</option>
-              <option>Few hours</option>
-              <option>1-2 days</option>
-              <option>1 week</option>
-            </select>
-            <select className="w-full border rounded-lg  text-black p-3 mb-3">
-              <option value="video">Video call</option>
-              <option value="voice">Voice call</option>
-              <option value="message">Messaging</option>
-            </select>
-            <select className="w-full border rounded-lg  text-black p-3 mb-3">
-              <option value="">Urgency</option>
-              <option value="routine">Routine</option>
-              <option value="soon">Soon</option>
-              <option value="urgent">Urgent</option>
-              <option value="emergency">Emergency</option>
-            </select>
-            <div>
-            <button
-              disabled={loading}
-              onClick={requestConsult}
-              className="w-full py-3 rounded-xl bg-blue-600 text-white font-semibold mb-3"
-            >
-              {loading ? "Requesting..." : "Request Consultation"}
-            </button>
-          </div>
-            
-            {/* Emergency Button fixed at bottom */}
+          <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 space-y-6">
+  {/* Header */}
+  <div className="border-b border-gray-100 pb-4">
+    <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+      <span className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+        🩺
+      </span>
+      Request Consultation
+    </h2>
+    <p className="text-sm text-gray-600 mt-1">Tell us about your symptoms to get matched with the right doctor</p>
+  </div>
 
-            <p className="text-sm text-red-600 mt-16 font-semibold">
-              ⚠️ Warning: Pressing the Red Alert button carelessly can lead to your account being disabled.
-            </p>
+  {/* Symptoms Description Section */}
+  <div className="space-y-4">
+    <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Symptom Details</h3>
+    
+    <div className="space-y-1">
+      <label className="text-sm font-medium text-gray-700">Describe Your Symptoms</label>
+      <div className="relative">
+        <textarea
+          placeholder="Please describe your symptoms in detail. Include when they started, severity, and any factors that make them better or worse..."
+          value={symptom}
+          onChange={(e) => setSymptom(e.target.value)}
+          className="w-full border border-gray-200 rounded-xl p-3 
+                     focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
+                     hover:border-gray-300 transition-colors duration-200
+                     bg-gray-50 focus:bg-white text-gray-800 resize-none"
+          rows={4}
+        />
+      </div>
+      <p className="text-xs text-gray-500">Be as detailed as possible to help doctors understand your condition</p>
+    </div>
 
-            <div className="fixed bottom-4 left-0 right-0 flex justify-center px-4">
-              <button
-                className="w-full max-w-md rounded-lg border border-red-500 bg-red-500 px-3 py-2 text- font-semibold text-white hover:bg-red-100"
-              >
-                🚨 Red Alert
-              </button>
-            </div>
+    <div className="space-y-1">
+      <label className="text-sm font-medium text-gray-700">How long have you had these symptoms?</label>
+      <div className="relative">
+        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <span className="text-gray-400">⏰</span>
+        </div>
+        <select className="w-full border border-gray-200 rounded-xl p-3 pl-10 
+                          focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
+                          hover:border-gray-300 transition-colors duration-200
+                          bg-gray-50 focus:bg-white text-gray-800 appearance-none">
+          <option value="">Select duration</option>
+          <option value="hours">Few hours</option>
+          <option value="1-2days">1-2 days</option>
+          <option value="week">1 week</option>
+          <option value="weeks">Several weeks</option>
+          <option value="month">1 month or more</option>
+        </select>
+        <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+          <span className="text-gray-400">▼</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {/* Consultation Preferences Section */}
+  <div className="space-y-4">
+    <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Consultation Preferences</h3>
+    
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="space-y-1">
+        <label className="text-sm font-medium text-gray-700">Consultation Type</label>
+        <div className="relative">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <span className="text-gray-400">💬</span>
           </div>
+          <select className="w-full border border-gray-200 rounded-xl p-3 pl-10 
+                            focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
+                            hover:border-gray-300 transition-colors duration-200
+                            bg-gray-50 focus:bg-white text-gray-800 appearance-none">
+            <option value="video">📹 Video call</option>
+            <option value="voice">📞 Voice call</option>
+            <option value="message">💬 Messaging</option>
+          </select>
+          <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+            <span className="text-gray-400">▼</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="space-y-1">
+        <label className="text-sm font-medium text-gray-700">Urgency Level</label>
+        <div className="relative">
+          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+            <span className="text-gray-400">📊</span>
+          </div>
+          <select className="w-full border border-gray-200 rounded-xl p-3 pl-10 
+                            focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
+                            hover:border-gray-300 transition-colors duration-200
+                            bg-gray-50 focus:bg-white text-gray-800 appearance-none">
+            <option value="">Select urgency</option>
+            <option value="routine">🟢 Routine (within days)</option>
+            <option value="soon">🟡 Soon (within hours)</option>
+            <option value="urgent">🟠 Urgent (within 30 mins)</option>
+            <option value="emergency">🔴 Emergency (immediate)</option>
+          </select>
+          <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+            <span className="text-gray-400">▼</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {/* Request Button */}
+  <div className="pt-4 border-t border-gray-100">
+    <button
+      disabled={loading}
+      onClick={requestConsult}
+      className="w-full py-3.5 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 
+                 hover:from-blue-700 hover:to-blue-800 
+                 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed
+                 text-white font-semibold shadow-lg hover:shadow-xl 
+                 transition-all duration-200 transform hover:scale-[1.02] disabled:hover:scale-100
+                 flex items-center justify-center gap-2"
+    >
+      {loading ? (
+        <>
+          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+          Requesting...
+        </>
+      ) : (
+        <>
+          <span>🔍</span>
+          Request Consultation
+        </>
+      )}
+    </button>
+  </div>
+
+  {/* Emergency Section */}
+  <div className="bg-red-50 border border-red-200 rounded-xl p-4 space-y-3">
+    <div className="flex items-start gap-2">
+      <span className="text-red-500 mt-0.5">⚠️</span>
+      <div className="flex-1">
+        <h4 className="text-sm font-semibold text-red-800">Emergency Alert</h4>
+        <p className="text-xs text-red-600 mt-1">
+          Only use Red Alert for life-threatening emergencies. Misuse may result in account suspension.
+        </p>
+      </div>
+    </div>
+    
+    <button className="w-full py-3 rounded-xl bg-red-500 hover:bg-red-600 
+                       text-white font-semibold shadow-lg hover:shadow-xl 
+                       transition-all duration-200 transform hover:scale-[1.02]
+                       flex items-center justify-center gap-2">
+      <span>🚨</span>
+      Red Alert - Emergency
+    </button>
+  </div>
+</div>
           
         )}
 
@@ -324,49 +427,118 @@ const requestConsult = async () => {
             </div>
           </div>
         )}
-
+      
         {/* Account */}
-        {activeTab === "account" && (
-          <div className="bg-white rounded-xl  text-black  shadow p-4 space-y-3">
-            <h2 className="text-lg font-semibold mb-4">Account Details</h2>
+{activeTab === "account" && (
+  <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 space-y-6">
+    {/* Header */}
+    <div className="border-b border-gray-100 pb-4">
+      <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+        <span className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+          👤
+        </span>
+        Account Details
+      </h2>
+      <p className="text-sm text-gray-600 mt-1">Manage your personal information and contact details</p>
+    </div>
+
+    {/* Personal Information Section */}
+    <div className="space-y-4">
+      <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Personal Information</h3>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-1">
+          <label className="text-sm font-medium text-gray-700">First Name</label>
+          <div className="relative">
             <input
               type="text"
               value={profile?.first_name || ""}
               onChange={(e) =>
                 setProfile({ ...profile, first_name: e.target.value })
               }
-              className="w-full border rounded-lg p-2"
-              placeholder="First Name"
+              className="w-full border border-gray-200 rounded-xl p-3 pl-4 
+                         focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
+                         hover:border-gray-300 transition-colors duration-200
+                         bg-gray-50 focus:bg-white text-gray-800"
+              placeholder="Enter your first name"
             />
+          </div>
+        </div>
+
+        <div className="space-y-1">
+          <label className="text-sm font-medium text-gray-700">Last Name</label>
+          <div className="relative">
             <input
               type="text"
               value={profile?.last_name || ""}
               onChange={(e) =>
                 setProfile({ ...profile, last_name: e.target.value })
               }
-              className="w-full border rounded-lg p-2"
-              placeholder="Last Name"
+              className="w-full border border-gray-200 rounded-xl p-3 pl-4 
+                         focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
+                         hover:border-gray-300 transition-colors duration-200
+                         bg-gray-50 focus:bg-white text-gray-800"
+              placeholder="Enter your last name"
             />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {/* Contact Information Section */}
+    <div className="space-y-4">
+      <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Contact Information</h3>
+      
+      <div className="space-y-4">
+        <div className="space-y-1">
+          <label className="text-sm font-medium text-gray-700">Email Address</label>
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <span className="text-gray-400">📧</span>
+            </div>
             <input
               type="email"
               value={profile?.email || ""}
               onChange={(e) =>
                 setProfile({ ...profile, email: e.target.value })
               }
-              className="w-full border rounded-lg p-2"
-              placeholder="Email"
+              className="w-full border border-gray-200 rounded-xl p-3 pl-10 
+                         focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
+                         hover:border-gray-300 transition-colors duration-200
+                         bg-gray-50 focus:bg-white text-gray-800"
+              placeholder="your.email@example.com"
             />
+          </div>
+        </div>
+
+        <div className="space-y-1">
+          <label className="text-sm font-medium text-gray-700">Phone Number</label>
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <span className="text-gray-400">📱</span>
+            </div>
             <input
               type="tel"
               value={profile?.phone_number || ""}
               onChange={(e) =>
                 setProfile({ ...profile, phone_number: e.target.value })
               }
-              className="w-full border rounded-lg p-2"
-              placeholder="Phone Number"
+              className="w-full border border-gray-200 rounded-xl p-3 pl-10 
+                         focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
+                         hover:border-gray-300 transition-colors duration-200
+                         bg-gray-50 focus:bg-white text-gray-800"
+              placeholder="e.g., 08012345678"
               maxLength={11}
             />
-            
+          </div>
+        </div>
+
+        <div className="space-y-1">
+          <label className="text-sm font-medium text-gray-700">Emergency Contact</label>
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <span className="text-gray-400">🚨</span>
+            </div>
             <input
               type="tel"
               value={profile?.emergency_contact || ""}
@@ -375,23 +547,58 @@ const requestConsult = async () => {
                 setProfile({ ...profile, emergency_contact: onlyDigits });
               }}
               maxLength={11}
-              className="w-full border rounded-lg p-2 text-black"
-              placeholder="Emergency Contact"
+              className="w-full border border-gray-200 rounded-xl p-3 pl-10 
+                         focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
+                         hover:border-gray-300 transition-colors duration-200
+                         bg-gray-50 focus:bg-white text-gray-800"
+              placeholder="Emergency contact number"
             />
-
-            <textarea
-              className="w-full border rounded-lg p-2"
-              placeholder="Medical History (not yet saved)"
-              defaultValue=""
-            />
-            <button
-              onClick={saveProfile}
-              className="w-full py-3 rounded-xl bg-blue-600 text-white font-semibold"
-            >
-              Save Changes
-            </button>
           </div>
-        )}
+          <p className="text-xs text-gray-500 mt-1">This contact will be notified in case of emergency</p>
+        </div>
+      </div>
+    </div>
+
+    {/* Medical Information Section */}
+    <div className="space-y-4">
+      <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Medical Information</h3>
+      
+      <div className="space-y-1">
+        <label className="text-sm font-medium text-gray-700">Medical History</label>
+        <div className="relative">
+          <textarea
+            className="w-full border border-gray-200 rounded-xl p-3 
+                       focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
+                       hover:border-gray-300 transition-colors duration-200
+                       bg-gray-50 focus:bg-white text-gray-800 resize-none"
+            placeholder="Share any relevant medical history, allergies, or current medications..."
+            rows={4}
+            defaultValue=""
+          />
+        </div>
+        <p className="text-xs text-amber-600 flex items-center gap-1">
+          <span>⚠️</span>
+          This information is not yet saved automatically
+        </p>
+      </div>
+    </div>
+
+    {/* Save Button */}
+    <div className="pt-4 border-t border-gray-100">
+      <button
+        onClick={saveProfile}
+        className="w-full py-3.5 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 
+                   hover:from-blue-700 hover:to-blue-800 
+                   text-white font-semibold shadow-lg hover:shadow-xl 
+                   transition-all duration-200 transform hover:scale-[1.02]
+                   flex items-center justify-center gap-2"
+      >
+        <span>💾</span>
+        Save Changes
+      </button>
+    </div>
+  </div>
+)}
       </div>
     </div>
     </KeyboardDismissWrapper>
