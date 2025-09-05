@@ -69,7 +69,7 @@ const handleFinish = async () => {
   {/* Content */}
   <div className="relative z-10 justify-start w-full max-w-md sm:max-w-lg md:max-w-2xl lg:max-w-3xl px-4 text-center">
   <div className="w-full flex justify-center ">
-  <div className="flex items-centerZ -mt-10">
+  <div className="flex items-centerZ -mt-8">
     <img src="/logo.png" alt="MediTrust Logo" className="w-10 h-10" />
     <span className="text-2xl font-bold text-blue-700">MediTrust</span>
   </div>
