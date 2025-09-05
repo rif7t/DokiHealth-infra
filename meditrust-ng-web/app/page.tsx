@@ -57,7 +57,7 @@ const handleFinish = async () => {
   };
 
     return (
-    <div className="relative min-h-screen flex flex-col items-center justify-start pt-8 bg-gradient-to-br from-slate-50 to-slate-200 overflow-hidden">
+    <div className="relative min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-slate-50 to-slate-200 overflow-hidden">
   {/* Doctor silhouettes */}
   <div className="doctors-background">
     <div className="doctor-silhouette doctor-1"></div>
@@ -69,7 +69,7 @@ const handleFinish = async () => {
   {/* Content */}
   <div className="relative z-10 justify-start w-full max-w-md sm:max-w-lg md:max-w-2xl lg:max-w-3xl px-4 text-center">
   <div className="w-full flex justify-center">
-  <div className="flex items-center -mt-6 mb-6">
+  <div className="flex items-centerZ -mt-15">
     <img src="/logo.png" alt="MediTrust Logo" className="w-10 h-10" />
     <span className="text-2xl font-bold text-blue-700">MediTrust</span>
   </div>
@@ -81,9 +81,8 @@ const handleFinish = async () => {
       How MediTrust Works for You
     </h1> */}
 
-    {/* Slider */}
-<div className="relative w-full max-w-5xl mx-auto overflow-hidden rounded-2xl shadow-lg 
-                h-[60vh] sm:h-[65vh] md:h-[70vh] lg:h-[75vh]">
+    <div className="relative mt-20 w-full max-w-5xl mx-auto overflow-hidden rounded-2xl shadow-lg 
+                h-[50vh] sm:h-[55vh] md:h-[50vh] lg:h-[55vh]">
   <div
     className="flex transition-transform duration-500 h-full"
     style={{ transform: `translateX(-${currentSlide * 100}%)` }}
@@ -122,8 +121,6 @@ const handleFinish = async () => {
     ))}
   </div>
 </div>
-
-
 
     <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
     🛡️ Refund-Backed Escrow
