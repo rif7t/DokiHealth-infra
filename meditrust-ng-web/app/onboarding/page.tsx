@@ -44,6 +44,13 @@ export default function OnboardingPage() {
     },
   ];
 
+  const finishOnboarding = async () => {
+  await fetch("/api/seen-onboarding", { method: "POST" });
+  // Then redirect to profile/dashboard
+  router.replace("/profile");
+};
+
+
   return (
     <div className="relative min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-slate-50 to-slate-200 overflow-hidden">
       {/* Doctor silhouettes */}
