@@ -69,7 +69,7 @@ const handleFinish = async () => {
   {/* Content */}
   <div className="relative z-10 justify-start w-full max-w-md sm:max-w-lg md:max-w-2xl lg:max-w-3xl px-4 text-center">
   <div className="w-full flex justify-center">
-  <div className="flex items-centerZ -mt-15">
+  <div className="flex items-centerZ -mt-10">
     <img src="/logo.png" alt="MediTrust Logo" className="w-10 h-10" />
     <span className="text-2xl font-bold text-blue-700">MediTrust</span>
   </div>
@@ -82,7 +82,7 @@ const handleFinish = async () => {
     </h1> */}
 
     <div className="relative mt-20 w-full max-w-5xl mx-auto overflow-hidden rounded-2xl shadow-lg 
-                h-[50vh] sm:h-[55vh] md:h-[50vh] lg:h-[55vh]">
+                h-[45vh] sm:h-[55vh] md:h-[50vh] lg:h-[55vh]">
   <div
     className="flex transition-transform duration-500 h-full"
     style={{ transform: `translateX(-${currentSlide * 100}%)` }}
@@ -90,7 +90,7 @@ const handleFinish = async () => {
     {slides.map((s, i) => (
       <div
         key={i}
-        className="min-w-full h-full flex flex-col items-center justify-center 
+        className="min-w-full h-full flex flex-col -mt-8 items-center justify-center 
                    bg-white/90 backdrop-blur p-6"
       >
         <div className="w-20 h-20 md:w-28 md:h-28 flex items-center justify-center rounded-full 
@@ -130,7 +130,7 @@ const handleFinish = async () => {
   </span>
 
     {/* CTA */}
-    <div className="mt-5 flex flex-col sm:flex-row justify-center gap-4">
+    <div className="mt-10 flex flex-col sm:flex-row justify-center gap-4">
       <button
         onClick={() => router.push("/sign-in")}
         className="w-full sm:w-auto px-2 py-4 rounded-full bg-gradient-to-r from-blue-400 to-blue-700 text-white font-semibold shadow hover:scale-105 transition"
