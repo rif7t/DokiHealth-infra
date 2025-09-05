@@ -58,7 +58,7 @@ export default function DoctorBell() {
 
       {/* Popup card */}
       {open && (
-        <div className="absolute right-0 mt-2 w-72 bg-white shadow-lg rounded-lg border p-4 z-50">
+        <div className="absolute right-8 top-14 w-[30dvh] sm:w-[1rem] max-h-64  sm:right-20 mt-2 w-60 bg-white shadow-lg rounded-lg border p-4 px-8 z-50">
           <h3 className="font-semibold mb-2 text-gray-900">Pending Consult</h3>
           {pendingConsults.length === 0 ? (
             <p className="text-sm text-gray-500">No new consults</p>
