@@ -160,7 +160,7 @@ export default function CreateProfile() {
                 className={`p-6 rounded-2xl border-2 ${
                   role === "patient"
                     ? "border-blue-500 bg-blue-500 text-white"
-                    : "border-slate-200 bg-blue-50 text-blue-600"
+                    : "border-slate-200 bg-green-200 text-blue-600"
                 }`}
               >
                 🧑‍💼 Patient
@@ -170,7 +170,7 @@ export default function CreateProfile() {
                 className={`p-6 rounded-2xl border-2 ${
                   role === "doctor"
                     ? "border-blue-500 bg-blue-500 text-white"
-                    : "border-slate-200 bg-blue-50 text-blue-600"
+                    : "border-slate-300 bg-green-200 text-blue-600"
                 }`}
               >
                 👨‍⚕️ Doctor
