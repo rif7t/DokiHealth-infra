@@ -67,7 +67,7 @@ export default function ProfileForm() {
   return (
     <form onSubmit={handleSubmit} className="mobile-card space-y-4">
   <div>
-  <label className="block text-sm font-medium text-slate-700">
+  <label className="block text-sm font-medium text-black">
     First Name
   </label>
   <input
@@ -79,7 +79,7 @@ export default function ProfileForm() {
 </div>
 
 <div>
-  <label className="block text-sm font-medium text-slate-700">
+  <label className="block text-sm font-medium text-black">
     Last Name
   </label>
   <input
@@ -92,7 +92,7 @@ export default function ProfileForm() {
 
 
   <div>
-    <label className="block text-sm font-medium text-slate-700">
+    <label className="block text-sm font-medium text-black">
       Phone Number
     </label>
     <input
@@ -104,7 +104,7 @@ export default function ProfileForm() {
   </div>
 
   <div>
-    <label className="block text-sm font-medium text-slate-700">
+    <label className="block text-sm font-medium text-black">
       Role
     </label>
     <select
@@ -122,7 +122,7 @@ export default function ProfileForm() {
         
     
       <div>
-        <label className="block text-sm font-medium text-slate-700">
+        <label className="block text-sm font-medium text-black">
           License Number
         </label>
         <input
@@ -134,7 +134,7 @@ export default function ProfileForm() {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-slate-700">
+        <label className="block text-sm font-medium text-black">
           Specialization
         </label>
         <input
@@ -146,7 +146,7 @@ export default function ProfileForm() {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-slate-700">
+        <label className="block text-sm font-medium text-black">
           Years of Experience
         </label>
         <input

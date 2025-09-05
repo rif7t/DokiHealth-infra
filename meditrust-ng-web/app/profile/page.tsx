@@ -201,7 +201,7 @@ export default function CreateProfile() {
               value={firstName}
               onChange={(e) => setFirstName(e.target.value)}
               required
-              className="w-full rounded-xl border border-slate-300 p-4 text-black"
+              className="w-full rounded-xl border bg-white border-blue-600 p-4 text-black"
             />
             <input
               type="text"
@@ -209,7 +209,7 @@ export default function CreateProfile() {
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
               required
-              className="w-full rounded-xl border border-slate-300 p-4 text-black"
+              className="w-full rounded-xl border bg-white border-blue-600 p-4 text-black"
             />
             <input
               type="tel"
@@ -223,30 +223,36 @@ export default function CreateProfile() {
               }}
               required
               maxLength={11} // optional extra safeguard
-              className="w-full rounded-xl border border-slate-300 p-4 text-black"
+              className="w-full rounded-xl border bg-white border-blue-600 p-4 text-black"
             />
 
 
             {role === "patient" && (
               <>
-                <input
-                  type="date"
-                  value={dob}
-                  onChange={(e) => setDob(e.target.value)}
-                  className="w-full rounded-xl border border-slate-300 p-4"
-                />
+                <label
+                htmlFor="dob"
+                className="block text-sm font-large text-black"
+              >
+                Date of Birth
+              </label>
+              <input
+                id="dob"
+                type="date"
+                className="w-full rounded-lg border border-blue-600 bg-white text-slate-800 px-3 py-2 
+                          focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+  />
                 <input
                   type="text"
                   placeholder="Emergency Contact"
                   value={emergencyContact}
                   onChange={(e) => setEmergencyContact(e.target.value)}
-                  className="w-full rounded-xl border border-slate-300 p-4"
+                  className="w-full rounded-xl border bg-white text-black border-blue-600 p-4"
                 />
                 <textarea
                   placeholder="Medical History (optional)"
                   value={medicalHistory}
                   onChange={(e) => setMedicalHistory(e.target.value)}
-                  className="w-full rounded-xl border border-slate-300 p-4"
+                  className="w-full rounded-xl border bg-white border-blue-600 p-4"
                 />
               </>
             )}
@@ -258,13 +264,13 @@ export default function CreateProfile() {
                   placeholder="Medical License Number"
                   value={licenseNumber}
                   onChange={(e) => setLicenseNumber(e.target.value)}
-                  className="w-full rounded-xl border border-slate-300 p-4 text-black"
+                  className="w-full rounded-xl border border-blue-600 p-4 text-black"
               />
               {/* Specialization Dropdown */}
                 <select
                   value={specialization}
                   onChange={(e) => setSpecialization(e.target.value)}
-                  className="w-full rounded-xl border border-slate-300 p-4 text-slate-900"
+                  className="w-full rounded-xl border border-blue-600 p-4 bg-white text-black"
                 >
                   <option value="">Select Specialization</option>
                   {SPECIALIZATIONS.map((s) => (
@@ -283,13 +289,13 @@ export default function CreateProfile() {
                     const val = e.target.value.replace(/\D/g, ""); // only digits
                     if (val.length <= 11) setAccountNumber(val);
                   }}
-                  className="w-full rounded-xl border border-slate-300 p-4"
+                  className="w-full rounded-xl border bg-white text-black border-blue-600 p-4"
                 />
                 {/* 🔹 Bank Dropdown */}
                 <select
                   value={bank}
                   onChange={(e) => setBank(e.target.value)}
-                  className="w-full rounded-xl border border-slate-300 p-4 bg-white text-slate-700"
+                  className="w-full rounded-xl border border-blue-600 p-4 bg-white text-slate-700"
                   required
                 >
                   <option value="">Select Bank</option>
@@ -304,13 +310,13 @@ export default function CreateProfile() {
                   placeholder="Years of Experience"
                   value={experience}
                   onChange={(e) => setExperience(e.target.value)}
-                  className="w-full rounded-xl border border-slate-300 p-4 text-black"
+                  className="w-full rounded-xl border border-blue-600 p-4 text-black"
                 />
                 <textarea
                   placeholder="Professional Bio"
                   value={doctorBio}
                   onChange={(e) => setDoctorBio(e.target.value)}
-                  className="w-full rounded-xl border border-slate-300 p-4 text-black"
+                  className="w-full rounded-xl border bg-white border-blue-600 p-4 text-black"
                 />
               </>
             )}

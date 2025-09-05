@@ -27,6 +27,13 @@ export function middleware(req: NextRequest) {
   //   return NextResponse.redirect(url);
   // }
 
+   // If onboarding not completed, force them to it (unless they're already there)
+  if (!seen && req.nextUrl.pathname !== "/onboarding") {
+    const url = req.nextUrl.clone();
+    url.pathname = "/onboarding";
+    return NextResponse.redirect(url);
+  }
+
   return NextResponse.next();
 }
 
