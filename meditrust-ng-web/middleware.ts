@@ -20,12 +20,12 @@ export function middleware(req: NextRequest) {
   // read cookie (Edge runtime)
   const seen = req.cookies.get("seenOnboarding")?.value === "true";
 
-  if (!seen) {
-    // redirect to onboarding preserving origin
-    const url = req.nextUrl.clone();
-    url.pathname = "/onboarding";
-    return NextResponse.redirect(url);
-  }
+  // if (!seen) {
+  //   // redirect to onboarding preserving origin
+  //   const url = req.nextUrl.clone();
+  //   url.pathname = "/onboarding";
+  //   return NextResponse.redirect(url);
+  // }
 
   return NextResponse.next();
 }
