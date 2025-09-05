@@ -103,106 +103,234 @@ export default function SignInPage() {
   };
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center px-6 bg-gradient-to-br from-white to-slate-100 overflow-hidden">
-      {/* subtle silhouettes */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-[15%] right-[10%] w-[120px] h-[180px] bg-blue-400 opacity-5 rounded-lg animate-pulse" />
-        <div className="absolute bottom-[20%] left-[5%] w-[100px] h-[150px] bg-blue-700 opacity-5 rounded-lg animate-pulse delay-1000" />
+    <div className="relative min-h-screen flex items-center justify-center px-4 sm:px-6 bg-gradient-to-br from-white via-slate-50 to-slate-100 overflow-hidden">
+  {/* Enhanced Background Elements */}
+  <div className="absolute inset-0 pointer-events-none">
+    <div className="absolute top-[10%] right-[8%] w-[140px] h-[200px] bg-gradient-to-br from-blue-400 to-blue-500 opacity-[0.03] rounded-2xl animate-pulse transform rotate-12" />
+    <div className="absolute bottom-[15%] left-[3%] w-[110px] h-[170px] bg-gradient-to-br from-blue-600 to-blue-700 opacity-[0.03] rounded-2xl animate-pulse delay-1000 transform -rotate-6" />
+    <div className="absolute top-[50%] left-[85%] w-[80px] h-[120px] bg-gradient-to-br from-blue-300 to-blue-400 opacity-[0.02] rounded-xl animate-pulse delay-500 transform rotate-45" />
+  </div>
+
+  <div className="w-full max-w-md relative z-10 transform -translate-y-8 sm:-translate-y-12">
+    <div className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/50 overflow-hidden">
+      
+      {/* Header Section */}
+      <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-8 py-6 text-center">
+        <div className="flex items-center mt-6 justify-center gap-3 mb-2">
+          <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
+            <span className="text-2xl">🏥</span>
+          </div>
+          <h1 className="text-2xl font-bold text-white">MediTrust</h1>
+        </div>
+        <p className="text-blue-100 text-sm">Your trusted healthcare platform</p>
       </div>
 
-      <div className="w-full max-w-md relative z-10 -translate-y-20">
-        <div className="bg-white/90 backdrop-blur-md rounded-3xl shadow-2xl p-8 border border-white/40">
-          <div className="text-3xl font-bold text-blue-700 text-center mb-6">
-            MediTrust
-          </div>
+      {/* Form Section */}
+      <div className="p-8 space-y-6">
+        
+        {/* Welcome Message */}
+        <div className="text-center mb-6">
+          <h2 className="text-xl font-bold text-gray-800 mb-1">Welcome Back</h2>
+          <p className="text-sm text-gray-600">Sign in to access your healthcare dashboard</p>
+        </div>
 
-          {/* Email */}
-          <div className="mb-4">
-            <label className="block text-sm font-semibold text-slate-700 mb-2">
-              Email Address
-            </label>
+        {/* Email Field */}
+        <div className="space-y-2">
+          <label className="block text-sm font-semibold text-gray-700">
+            Email Address
+          </label>
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+              <span className="text-gray-400">📧</span>
+            </div>
             <input
               type="email"
-              placeholder="Enter your email"
+              placeholder="your.email@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-2xl border-2 border-slate-200 p-4 text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+              className="w-full rounded-2xl border-2 border-gray-200 p-4 pl-12 text-gray-800 
+                         placeholder-gray-400 bg-gray-50 
+                         focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 
+                         focus:bg-white hover:border-gray-300
+                         transition-all duration-200"
               autoComplete="email"
             />
           </div>
+        </div>
 
-          {/* Password */}
-          <div className="mb-6">
-            <label className="block text-sm font-semibold text-slate-700 mb-2">
-              Password
-            </label>
+        {/* Password Field */}
+        <div className="space-y-2">
+          <label className="block text-sm font-semibold text-gray-700">
+            Password
+          </label>
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+              <span className="text-gray-400">🔐</span>
+            </div>
             <input
               type="password"
-              placeholder="Enter your password"
+              placeholder="Enter your secure password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-2xl border-2 border-slate-200 p-4 text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+              className="w-full rounded-2xl border-2 border-gray-200 p-4 pl-12 text-gray-800 
+                         placeholder-gray-400 bg-gray-50 
+                         focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 
+                         focus:bg-white hover:border-gray-300
+                         transition-all duration-200"
               autoComplete="current-password"
             />
           </div>
+        </div>
 
-          {/* Sign In */}
-          <button
-            onClick={handleSignIn}
-            disabled={isLoading}
-            className="w-full mb-4 py-4 rounded-2xl bg-gradient-to-r from-blue-400 to-blue-700 text-white font-semibold shadow hover:scale-[1.02] transition"
-          >
-            Sign In
-          </button>
-
-          {/* Sign Up */}
-          <button
-            onClick={handleSignUp}
-            disabled={isLoading}
-            className="w-full py-4 rounded-2xl bg-white border-2 border-blue-600 text-blue-600 font-semibold shadow hover:bg-blue-600 hover:text-white transition"
-          >
-            Create New Account
+        {/* Forgot Password Link */}
+        <div className="text-right">
+          <button className="text-sm text-blue-600 hover:text-blue-700 font-medium hover:underline transition-colors">
+            Forgot your password?
           </button>
         </div>
-      </div>
 
-      {/* Full-screen loading overlay */}
-      {isLoading && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center z-50 animate-fade-slide-up">
-          {!success ? (
+        {/* Sign In Button */}
+        <button
+          onClick={handleSignIn}
+          disabled={isLoading}
+          className="w-full py-4 rounded-2xl bg-gradient-to-r from-blue-600 to-blue-700 
+                     hover:from-blue-700 hover:to-blue-800 
+                     disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed
+                     text-white font-semibold shadow-lg hover:shadow-xl 
+                     transition-all duration-200 transform hover:scale-[1.02] disabled:hover:scale-100
+                     flex items-center justify-center gap-2"
+        >
+          {isLoading && signInLoading ? (
             <>
-              <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-white mb-6"></div>
-              <p className="text-white text-lg font-semibold">
-                {signInLoading ? "Signing you in..." : "Creating your account..."}
-              </p>
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              Signing In...
             </>
           ) : (
             <>
-              <div className="text-6xl text-green-400 mb-4 animate-bounce">⭐</div>
-              <p className="text-white text-lg font-semibold">
-                Staying on top of your health - we love it!
-              </p>
+              <span>🔓</span>
+              Sign In
             </>
           )}
-        </div>
-      )}
+        </button>
 
-      {/* Error Modal */}
-      {errorModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl shadow-2xl p-8 text-center w-[90%] max-w-md">
-            <div className="text-4xl mb-4 text-red-500">⚠️</div>
-            <h2 className="text-xl font-bold text-slate-700 mb-2">Error</h2>
-            <p className="text-slate-600 mb-6">{errorMessage}</p>
+        {/* Divider */}
+        <div className="relative flex items-center">
+          <div className="flex-grow border-t border-gray-200"></div>
+          <span className="flex-shrink-0 px-4 text-sm text-gray-500 bg-white">or</span>
+          <div className="flex-grow border-t border-gray-200"></div>
+        </div>
+
+        {/* Create Account Button */}
+        <button
+          onClick={handleSignUp}
+          disabled={isLoading}
+          className="w-full py-4 rounded-2xl bg-white border-2 border-blue-600 
+                     text-blue-600 font-semibold shadow-md 
+                     hover:bg-blue-600 hover:text-white hover:shadow-lg
+                     disabled:border-gray-300 disabled:text-gray-400 disabled:cursor-not-allowed
+                     transition-all duration-200 transform hover:scale-[1.02] disabled:hover:scale-100
+                     flex items-center justify-center gap-2"
+        >
+          {isLoading && !signInLoading ? (
+            <>
+              <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
+              Creating Account...
+            </>
+          ) : (
+            <>
+              <span>✨</span>
+              Create New Account
+            </>
+          )}
+        </button>
+
+        {/* Footer Text */}
+        <p className="text-xs text-gray-500 text-center mt-6 leading-relaxed">
+          By continuing, you agree to our Terms of Service and Privacy Policy. 
+          Your health data is protected and encrypted.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  {/* Enhanced Loading Overlay */}
+  {isLoading && (
+    <div className="fixed inset-0 bg-white/95 backdrop-blur-md flex flex-col items-center justify-center z-50">
+      <div className="bg-white rounded-3xl shadow-2xl border border-gray-100 p-10 text-center max-w-md">
+        {!success ? (
+          <>
+            <div className="relative mb-6">
+              <div className="w-16 h-16 border-4 border-blue-100 rounded-full"></div>
+              <div className="absolute top-0 left-0 w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+            </div>
+            <h3 className="text-gray-800 text-xl font-bold mb-2">
+              {signInLoading ? "Signing You In" : "Creating Your Account"}
+            </h3>
+            <p className="text-gray-600 text-sm">
+              {signInLoading ? "Accessing your healthcare dashboard..." : "Setting up your personalized health profile..."}
+            </p>
+          </>
+        ) : (
+          <>
+            <div className="relative mb-6">
+              <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center shadow-lg">
+                <span className="text-white text-3xl">✓</span>
+              </div>
+              <div className="absolute -top-1 -right-1 w-6 h-6 bg-gradient-to-r from-green-500 to-green-600 rounded-full flex items-center justify-center shadow-md">
+                <span className="text-white text-xs">🩺</span>
+              </div>
+            </div>
+            <h3 className="text-gray-800 text-xl font-bold mb-2">
+              Welcome to MediTrust!
+            </h3>
+            <p className="text-gray-600 text-sm">
+              Your healthcare journey begins now
+            </p>
+          </>
+        )}
+      </div>
+    </div>
+  )}
+
+  {/* Enhanced Error Modal */}
+  {errorModal && (
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-3xl shadow-2xl overflow-hidden w-full max-w-md">
+        
+        {/* Error Header */}
+        <div className="bg-red-50 px-6 py-4 border-b border-red-100">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center">
+              <span className="text-red-500 text-xl">⚠️</span>
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-red-800">Authentication Error</h3>
+              <p className="text-sm text-red-600">Something went wrong</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Error Content */}
+        <div className="p-6">
+          <p className="text-gray-700 mb-6 leading-relaxed">{errorMessage}</p>
+          
+          <div className="flex gap-3">
             <button
               onClick={() => setErrorModal(false)}
-              className="w-full py-3 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 text-white font-semibold shadow"
+              className="flex-1 py-3 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 
+                         hover:from-blue-700 hover:to-blue-800 
+                         text-white font-semibold shadow-lg hover:shadow-xl 
+                         transition-all duration-200 transform hover:scale-[1.02]
+                         flex items-center justify-center gap-2"
             >
+              <span>🔄</span>
               Try Again
             </button>
           </div>
         </div>
-      )}
+      </div>
     </div>
+  )}
+</div>
   );
 }
