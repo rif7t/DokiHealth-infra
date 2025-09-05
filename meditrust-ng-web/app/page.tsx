@@ -67,9 +67,9 @@ const handleFinish = async () => {
   </div>
 
   {/* Content */}
-  <div className="relative z-10 w-full max-w-md sm:max-w-lg md:max-w-2xl lg:max-w-3xl px-4 text-center">
-  <div className="w-full flex justify-center -pt-2">
-  <div className="flex items-center">
+  <div className="relative z-10 justify-start w-full max-w-md sm:max-w-lg md:max-w-2xl lg:max-w-3xl px-4 text-center">
+  <div className="w-full flex justify-center">
+  <div className="flex items-center -mt-6 mb-8">
     <img src="/logo.png" alt="MediTrust Logo" className="w-10 h-10" />
     <span className="text-2xl font-bold text-blue-700">MediTrust</span>
   </div>
@@ -82,24 +82,23 @@ const handleFinish = async () => {
     </h1> */}
 
     {/* Slider */}
-    <div className="relative w-full overflow-hidden rounded-2xl shadow-lg">
+    <div className="relative w-full overflow-hidden rounded-2xl justify-start shadow-lg">
       <div
         className="flex transition-transform duration-500"
         style={{ transform: `translateX(-${currentSlide * 100}%)` }}
       >
         {slides.map((s, i) => (
           <div
-            key={i}
-            className="min-w-full bg-white/90 backdrop-blur p-6 sm:p-8 md:p-10 flex flex-col items-center"
-          >
-            <div className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 flex items-center justify-center rounded-full bg-gradient-to-br from-blue-400 to-blue-700 text-4xl sm:text-5xl md:text-6xl text-white shadow-lg mb-6">
-              {s.icon}
-            </div>
-            <h3 className="text-lg sm:text-xl font-semibold text-slate-800 mb-3">
-              {s.title}
-            </h3>
-            <p className="text-slate-600 text-sm sm:text-base max-w-md">{s.desc}</p>
+          key={i}
+          className="min-w-full bg-white/90 backdrop-blur p-10 flex flex-col items-center justify-center min-h-[400px] sm:min-h-[450px] md:min-h-[500px]"
+        >
+          <div className="w-28 h-28 flex items-center justify-center rounded-full bg-gradient-to-br from-blue-400 to-blue-700 text-5xl text-white shadow-lg mb-6">
+            {s.icon}
           </div>
+          <h3 className="text-xl font-semibold text-slate-800 mb-3">{s.title}</h3>
+          <p className="text-slate-600 max-w-md">{s.desc}</p>
+        </div>
+
         ))}
       </div>
 
@@ -109,16 +108,22 @@ const handleFinish = async () => {
           <span
             key={i}
             onClick={() => setCurrentSlide(i)}
-            className={`w-3.5 h-3.5 sm:w-3 sm:h-4 rounded-full cursor-pointer transition-all ${
+            className={`w-2.5 h-2.5 sm:w-3 sm:h-4 rounded-full cursor-pointer transition-all ${
               currentSlide === i ? "bg-blue-500 scale-125" : "bg-blue-300/40"
             }`}
           />
         ))}
       </div>
     </div>
+    <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
+    🛡️ Refund-Backed Escrow
+  </span>
+  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
+    ⚖️ Doctor & Patient Protection
+  </span>
 
     {/* CTA */}
-    <div className="mt-8 flex flex-col sm:flex-row justify-center gap-4">
+    <div className="mt-5 flex flex-col sm:flex-row justify-center gap-4">
       <button
         onClick={() => router.push("/sign-in")}
         className="w-full sm:w-auto px-2 py-4 rounded-full bg-gradient-to-r from-blue-400 to-blue-700 text-white font-semibold shadow hover:scale-105 transition"
@@ -131,12 +136,7 @@ const handleFinish = async () => {
     </div>
 
     <div className="mt-6 flex flex-wrap justify-center gap-2">
-  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
-    🛡️ Refund-Backed Escrow
-  </span>
-  <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
-    ⚖️ Doctor & Patient Protection
-  </span>
+  
   
 </div>
   </div>
