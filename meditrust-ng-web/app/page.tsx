@@ -68,7 +68,7 @@ const handleFinish = async () => {
 
   {/* Content */}
   <div className="relative z-10 justify-start w-full max-w-md sm:max-w-lg md:max-w-2xl lg:max-w-3xl px-4 text-center">
-  <div className="w-full flex justify-center">
+  <div className="w-full flex justify-center -mt-1">
   <div className="flex items-centerZ -mt-10">
     <img src="/logo.png" alt="MediTrust Logo" className="w-10 h-10" />
     <span className="text-2xl font-bold text-blue-700">MediTrust</span>
@@ -130,7 +130,7 @@ const handleFinish = async () => {
   </span>
 
     {/* CTA */}
-    <div className="mt-10 flex flex-col sm:flex-row justify-center gap-4">
+    <div className="mt-14 flex flex-col sm:flex-row justify-center gap-4">
       <button
         onClick={() => router.push("/sign-in")}
         className="w-full sm:w-auto px-2 py-4 rounded-full bg-gradient-to-r from-blue-400 to-blue-700 text-white font-semibold shadow hover:scale-105 transition"
