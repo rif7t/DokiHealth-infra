@@ -13,7 +13,7 @@ export interface TriageResponse {
 }
 
 export async function POST(req: NextRequest) {
-  const token = req.headers.get("authorization")?.replace(/^Bearer\s+/i, ""); // lowercase
+  const token = req.headers.get("authorization"); // lowercase
 
   if (!token)
     return NextResponse.json({ error: "No access token" }, { status: 401 });
@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+          Authorization: token,
           apikey: process.env.NEXT_PUBLIC_PUBLISHABLE_KEY!,
         },
         body: JSON.stringify({ symptoms }),

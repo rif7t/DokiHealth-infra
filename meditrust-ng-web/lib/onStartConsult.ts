@@ -1,17 +1,19 @@
 // lib/onStartConsult.ts
-import { supabase } from "@/lib/supabaseClient";
 import { publish } from "@/lib/eventBus";
-import { TriageResponse } from "@/app/api/triage/route";
+// lib/onStartConsult.ts
+import { getSession } from "./sessionCache";
+
+type TriageResponse = {
+  triage_id: string;
+  // add other fields you expect here
+};
 
 export async function startConsult(symptom: string) {
-  try {
-    // 1. Get session
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    if (!session) throw new Error("Not authenticated");
+  const session = getSession();
+  if (!session) throw new Error("No active session. Please sign in again.");
 
-    // 2. Call Triage API
+  try {
+    // 1. Call Triage API
     const res = await fetch("/api/triage", {
       method: "POST",
       headers: {
@@ -20,14 +22,11 @@ export async function startConsult(symptom: string) {
       },
       body: JSON.stringify({ symptoms: symptom }),
     });
-    if (!res.ok) {
-      const errText = await res.text();
-      throw new Error(errText);
-    }
-    const result: TriageResponse = await res.json();
+    if (!res.ok) throw new Error(await res.text());
+    const result = (await res.json()) as TriageResponse;
     const triageID = result.triage_id;
 
-    // 3. Request a consult
+    // 2. Request a consult
     const res1 = await fetch("/api/consult-request", {
       method: "POST",
       headers: {
@@ -36,13 +35,10 @@ export async function startConsult(symptom: string) {
       },
       body: JSON.stringify({ triage_id: triageID }),
     });
-    if (!res1.ok) {
-      const errText = await res1.text();
-      throw new Error(errText);
-    }
+    if (!res1.ok) throw new Error(await res1.text());
     const output = await res1.json();
 
-    // 4. Assign doctor + start payment flow
+    // 3. Assign doctor + start payment flow
     const res2 = await fetch("/api/assign-consult-and-pay", {
       method: "POST",
       headers: {
@@ -54,17 +50,13 @@ export async function startConsult(symptom: string) {
         specialty: output.specialty,
       }),
     });
-
-    if (!res2.ok) {
-      const errText = await res2.text();
-      throw new Error(errText);
-    }
+    if (!res2.ok) throw new Error(await res2.text());
     const result2 = await res2.json();
-    
+
     console.log("Consult status:", result2.status);
     console.log("Doctor assigned:", result2.doctor_id);
 
-    // 5. Publish event back to app
+    // 4. Publish event back to app
     if (result2.status === "requested") {
       publish("requested", 1);
     } else {
@@ -77,3 +69,5 @@ export async function startConsult(symptom: string) {
     throw e;
   }
 }
+
+

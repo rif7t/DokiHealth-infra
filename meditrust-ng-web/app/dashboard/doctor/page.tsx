@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
 import DoctorBell from "@/components/DoctorBell";
 import { subscribe } from "@/lib/eventBus";
+import { useRef } from "react";
 import { KeyboardDismissWrapper } from "@/components/KeyboardDismissWrapper";
 
 export default function DoctorDashboard() {
@@ -21,19 +22,28 @@ export default function DoctorDashboard() {
   const [consult, setConsult] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [showToast, setShowToast] = useState(false);
-
+  const [session, setSession] = useState<any | null>(null);
+  const [loadingSession, setLoadingSession] = useState(true);
+  const [cstatus, setCstatus] = useState<any | null>(null);
   const router = useRouter();
+  const audioRef = useRef<HTMLAudioElement | null>(null);      
+
+  
 
   // 🔔 Subscription to new consults
   useEffect(() => {
     const unsubscribe = subscribe("new-consult", () => {
       setShowToast(true);
-      const audio = new Audio("@/public/notifications/consult-notif.wav");
-      audio.play().catch((e) => console.error("Sound play failed:", e));
+      if (!audioRef.current) {
+          audioRef.current = new Audio("/notifications/consult-notif.mp3");
+        }
+        audioRef.current.play();
       setTimeout(() => setShowToast(false), 2000);
     });
     return () => unsubscribe();
   }, []);
+
+  
 
   // Fetch consults for logged-in doctor
   useEffect(() => {
@@ -77,6 +87,7 @@ export default function DoctorDashboard() {
       const {
         data: { session },
       } = await supabase.auth.getSession();
+      
       if (!session) return router.replace("/sign-in");
 
       const res = await fetch("/api/profile", {
@@ -185,6 +196,8 @@ export default function DoctorDashboard() {
     router.replace("/sign-in");
   };
 
+  ConsultStatusWatcher();
+
   return (
     <KeyboardDismissWrapper>
       <div className="min-h-screen bg-gradient-to-br from-white to-slate-100">
@@ -201,7 +214,7 @@ export default function DoctorDashboard() {
 
         {/* Tabs */}
         <div className="flex space-x-2 bg-slate-50 p-2">
-          {["overview", "history", "account", "payouts"].map((t) => (
+          {["overview", "history","payouts","account"].map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
@@ -228,12 +241,7 @@ export default function DoctorDashboard() {
       </div>
       <div className="flex items-center justify-end  gap-3">
             <DoctorBell />
-            <button
-              onClick={signOut}
-              className="bg-red-100 text-red-600 px-3 py-2 rounded-lg text-xs font-semibold"
-            >
-              Sign Out
-            </button>
+            
           </div>
     </div>
 
@@ -324,10 +332,10 @@ export default function DoctorDashboard() {
       {consultations.length === 0 ? (
         <div className="text-center py-8 sm:py-12">
           <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
-            <span className="text-xl sm:text-2xl">📅</span>
+            <span className="text-xl sm:text-2xl"></span>
           </div>
-          <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-1 sm:mb-2">No consultations scheduled</h3>
-          <p className="text-gray-600 text-xs sm:text-sm">You have no patient consultations for today. Take some time to rest!</p>
+          <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-1 sm:mb-2">No consultations yet</h3>
+          <p className="text-gray-600 text-xs sm:text-sm">You've had no patient consultations today.</p>
         </div>
       ) : (
         <div className="space-y-3 sm:space-y-4">
@@ -414,21 +422,84 @@ export default function DoctorDashboard() {
           </div>
         )}
 
-        {/* Account */}
+        {/* Payouts */}
+        {tab === "payouts" && (
+          <div className="p-4 space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-white rounded-lg p-4 shadow text-center">
+                <p className="text-2xl font-bold text-blue-600">
+                  ₦
+                  {payouts
+                    .filter((p) => p.status === "paid")
+                    .reduce((sum, p) => sum + p.amount, 0)}
+                </p>
+                <p className="text-slate-600">This Month</p>
+              </div>
+              <div className="bg-white rounded-lg p-4 shadow text-center">
+                <p className="text-2xl font-bold text-green-600">
+                  ₦
+                  {payouts
+                    .filter((p) => p.status === "pending")
+                    .reduce((sum, p) => sum + p.amount, 0)}
+                </p>
+                <p className="text-slate-600">Pending</p>
+              </div>
+            </div>
+            <div className="bg-white rounded-lg p-4 shadow">
+              <h2 className="font-semibold text-black mb-3">Payout History</h2>
+              {payouts.length === 0 ? (
+                <p className="text-slate-500">No payout history yet.</p>
+              ) : (
+                payouts.map((p) => (
+                  <div
+                    key={p.id}
+                    className="flex justify-between border-b py-2 last:border-none"
+                  >
+                    <div>
+                      <h4 className="font-semibold">₦{p.amount}</h4>
+                      <p className="text-sm text-slate-500">
+                        {new Date(p.created_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <span
+                      className={`text-xs px-2 py-1 rounded ${
+                        p.status === "paid"
+                          ? "bg-green-100 text-green-600"
+                          : "bg-yellow-100 text-yellow-600"
+                      }`}
+                    >
+                      {p.status}
+                    </span>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        )}
+
+          {/* Account */}
         {tab === "account" && (
   <div className="p-4 space-y-6">
     <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 space-y-6">
       
       {/* Header */}
-      <div className="border-b border-gray-100 pb-4">
-        <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-          <span className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-            👨‍⚕️
-          </span>
-          Doctor Profile
-        </h2>
-        <p className="text-sm text-gray-600 mt-1">Manage your professional information and payment details</p>
-      </div>
+      <div className="border-b border-gray-100 pb-4 flex items-center justify-between">
+  <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+    Doctor Profile
+  </h2>
+
+  <button
+    onClick={signOut}
+    className="bg-red-100 text-red-600 px-3 py-2 rounded-lg text-xs font-semibold hover:bg-red-200"
+  >
+    Sign Out
+  </button>
+</div>
+
+<p className="text-sm text-gray-600 mt-1">
+  Manage your professional information and payment details
+</p>
+
 
       {/* Personal Information Section */}
       <div className="space-y-4">
@@ -615,64 +686,47 @@ export default function DoctorDashboard() {
         </button>
       </div>
     </div>
-  </div>
-)}
-
-        {/* Payouts */}
-        {tab === "payouts" && (
-          <div className="p-4 space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-white rounded-lg p-4 shadow text-center">
-                <p className="text-2xl font-bold text-blue-600">
-                  ₦
-                  {payouts
-                    .filter((p) => p.status === "paid")
-                    .reduce((sum, p) => sum + p.amount, 0)}
-                </p>
-                <p className="text-slate-600">This Month</p>
-              </div>
-              <div className="bg-white rounded-lg p-4 shadow text-center">
-                <p className="text-2xl font-bold text-green-600">
-                  ₦
-                  {payouts
-                    .filter((p) => p.status === "pending")
-                    .reduce((sum, p) => sum + p.amount, 0)}
-                </p>
-                <p className="text-slate-600">Pending</p>
-              </div>
-            </div>
-            <div className="bg-white rounded-lg p-4 shadow">
-              <h2 className="font-semibold text-black mb-3">Payout History</h2>
-              {payouts.length === 0 ? (
-                <p className="text-slate-500">No payout history yet.</p>
-              ) : (
-                payouts.map((p) => (
-                  <div
-                    key={p.id}
-                    className="flex justify-between border-b py-2 last:border-none"
-                  >
-                    <div>
-                      <h4 className="font-semibold">₦{p.amount}</h4>
-                      <p className="text-sm text-slate-500">
-                        {new Date(p.created_at).toLocaleDateString()}
-                      </p>
-                    </div>
-                    <span
-                      className={`text-xs px-2 py-1 rounded ${
-                        p.status === "paid"
-                          ? "bg-green-100 text-green-600"
-                          : "bg-yellow-100 text-yellow-600"
-                      }`}
-                    >
-                      {p.status}
-                    </span>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-        )}
+   </div>
+ )}
       </div>
     </KeyboardDismissWrapper>
+  );
+}
+
+
+export function ConsultStatusWatcher() {
+  const [status, setStatus] = useState<any | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    console.log("SETTING UP SUBSCRIPTION");
+    const channel = supabase
+      .channel("profile-realtime")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "profile" },
+        async (payload) => {
+          console.log("Change received!", payload);
+
+          if (payload.eventType == "UPDATE") {
+            setStatus(payload.new);
+            
+          }
+        }
+      )
+      .subscribe((status) => console.log("Subscription status:", status));
+
+    // Cleanup subscription when component unmounts
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  return (
+    <div>
+      <h3>Consult Status Watcher</h3>
+      {error && <p style={{ color: "red" }}>Error: {error}</p>}
+      <pre>{status ? JSON.stringify(status, null, 2) : "No updates yet"}</pre>
+    </div>
   );
 }
