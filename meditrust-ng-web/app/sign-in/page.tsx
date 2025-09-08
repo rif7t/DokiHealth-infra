@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
 
@@ -49,6 +49,9 @@ export default function SignInPage() {
     // Show success state ⭐
     setSuccess(true);
 
+    console.log("Session check:", data.session, "Error:", error);
+
+
     setTimeout(async () => {
       const { data: profile } = await supabase
         .from("profile")
@@ -68,9 +71,9 @@ export default function SignInPage() {
 
       setSignInLoading(false);
       setSuccess(false);
-    }, 1200);
+    }, 2500);
   };
-
+  
   // ---- SIGN UP ----
   const handleSignUp = async () => {
     if (!email || !password) {
@@ -255,42 +258,44 @@ export default function SignInPage() {
 
   {/* Enhanced Loading Overlay */}
   {isLoading && (
-    <div className="fixed inset-0 bg-white/95 backdrop-blur-md flex flex-col items-center justify-center z-50">
-      <div className="bg-white rounded-3xl shadow-2xl border border-gray-100 p-10 text-center max-w-md">
-        {!success ? (
-          <>
-            <div className="relative mb-6">
-              <div className="w-16 h-16 border-4 border-blue-100 rounded-full"></div>
-              <div className="absolute top-0 left-0 w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+  <div className="fixed inset-0 bg-white/40 backdrop-blur-md flex flex-col items-center justify-center z-50 transition-opacity duration-300">
+    <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-gray-200 p-10 text-center max-w-md">
+      {!success ? (
+        <>
+          <div className="relative mb-6">
+            <div className="w-16 h-16 border-4 border-blue-100 rounded-full"></div>
+            <div className="absolute top-0 left-0 w-16 h-16 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+          </div>
+          <h3 className="text-gray-800 text-xl font-bold mb-2">
+            {signInLoading ? "Signing You In" : "Creating Your Account"}
+          </h3>
+          <p className="text-gray-600 text-sm">
+            {signInLoading
+              ? "Accessing your healthcare dashboard..."
+              : "Setting up your personalized health profile..."}
+          </p>
+        </>
+      ) : (
+        <>
+          <div className="relative mb-6">
+            <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center shadow-lg">
+              <span className="text-white text-3xl">✓</span>
             </div>
-            <h3 className="text-gray-800 text-xl font-bold mb-2">
-              {signInLoading ? "Signing You In" : "Creating Your Account"}
-            </h3>
-            <p className="text-gray-600 text-sm">
-              {signInLoading ? "Accessing your healthcare dashboard..." : "Setting up your personalized health profile..."}
-            </p>
-          </>
-        ) : (
-          <>
-            <div className="relative mb-6">
-              <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center shadow-lg">
-                <span className="text-white text-3xl">✓</span>
-              </div>
-              <div className="absolute -top-1 -right-1 w-6 h-6 bg-gradient-to-r from-green-500 to-green-600 rounded-full flex items-center justify-center shadow-md">
-                <span className="text-white text-xs">🩺</span>
-              </div>
-            </div>
-            <h3 className="text-gray-800 text-xl font-bold mb-2">
-              Welcome to MediTrust!
-            </h3>
-            <p className="text-gray-600 text-sm">
-              Your healthcare journey begins now
-            </p>
-          </>
-        )}
-      </div>
+            <div className="absolute -top-1 -right-1 w-6 h-6 bg-gradient-to-r from-green-500 to-green-600 rounded-full opacity-30 flex items-center justify-center shadow-md" />
+          </div>
+          <h3 className="text-gray-800 text-xl font-bold mb-2">
+            Welcome to MediTrust!
+          </h3>
+          <p className="text-gray-600 text-sm">
+            Your healthcare journey begins now
+          </p>
+        </>
+      )}
     </div>
-  )}
+  </div>
+)}
+
+
 
   {/* Enhanced Error Modal */}
   {errorModal && (

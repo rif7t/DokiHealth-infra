@@ -37,7 +37,10 @@ export async function POST(req: NextRequest) {
       }
     );
     
-    if (!res.ok) throw new Error(await res.json());
+   if (!res.ok) {
+  const errorBody = await res.json().catch(() => ({}));
+  throw new Error(errorBody.message ?? JSON.stringify(errorBody));
+}
     const consult_info = await res.json();
     console.log("CONSULT REQUEST: ", consult_info);
     let consult_id = consult_info.consult_id;
