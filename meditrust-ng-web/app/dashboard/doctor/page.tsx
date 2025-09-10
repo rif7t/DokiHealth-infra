@@ -694,39 +694,148 @@ export default function DoctorDashboard() {
 }
 
 
+// export function ConsultStatusWatcher() {
+//   const [status, setStatus] = useState<any | null>(null);
+//   const [error, setError] = useState<string | null>(null);
+
+//   useEffect(() => {
+//     console.log("SETTING UP SUBSCRIPTION");
+//     const channel = supabase
+//       .channel("profile-realtime")
+//       .on(
+//         "postgres_changes",
+//         { event: "*", schema: "public", table: "profile" },
+//         async (payload) => {
+//           console.log("Change received!", payload);
+
+//           if (payload.eventType == "UPDATE") {
+//             setStatus(payload.new);
+            
+//           }
+//         }
+//       )
+//       .subscribe((status) => console.log("Subscription status:", status));
+
+//     // Cleanup subscription when component unmounts
+//     return () => {
+//       supabase.removeChannel(channel);
+//     };
+//   }, []);
+
+//   return (
+//     <div>
+//       <h3>Consult Status Watcher</h3>
+//       {error && <p style={{ color: "red" }}>Error: {error}</p>}
+//       <pre>{status ? JSON.stringify(status, null, 2) : "No updates yet"}</pre>
+//     </div>
+//   );
+// }
+
+
+
 export function ConsultStatusWatcher() {
-  const [status, setStatus] = useState<any | null>(null);
+  const [last, setLast] = useState<any | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const joinedRef = useRef<Set<string>>(new Set()); // de-dupe joins
 
   useEffect(() => {
-    console.log("SETTING UP SUBSCRIPTION");
-    const channel = supabase
-      .channel("profile-realtime")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "profile" },
-        async (payload) => {
-          console.log("Change received!", payload);
+    let channel: ReturnType<typeof supabase.channel> | null = null;
+    let unsub: { unsubscribe: () => void } | null = null;
+    let cancelled = false;
 
-          if (payload.eventType == "UPDATE") {
-            setStatus(payload.new);
-            
-          }
+    (async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) { setError("Not authenticated"); return; }
+      supabase.realtime.setAuth(session.access_token);
+      const doctorId = session.user.id;
+
+      // Optional catch-up: if something is already connecting, act now
+      const { data: rows } = await supabase
+        .from("consult")
+        .select("id, status, twilio_room")
+        .eq("assigned_doctor_id", doctorId)
+        .eq("status", "connecting");
+
+      for (const r of rows ?? []) {
+        if (r.twilio_room && !joinedRef.current.has(r.id)) {
+          joinedRef.current.add(r.id);
+          try { await joinConsult(r.id, r.twilio_room, "doctor"); } catch (e: any) { setError(e?.message ?? "Join failed"); }
         }
-      )
-      .subscribe((status) => console.log("Subscription status:", status));
+      }
 
-    // Cleanup subscription when component unmounts
+      // Live updates scoped to this doctor’s consults
+      channel = supabase
+        .channel(`doctor-realtime-${doctorId}`)
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "consult",
+            filter: `doctor_id=eq.${doctorId}`,
+          },
+          async (payload) => {
+            setLast((payload as any).new ?? payload);
+            //if (payload.eventType !== "UPDATE") return;
+
+            const row = (payload as any).new;
+            if (row?.status === "connecting" && row?.twilio_room && !joinedRef.current.has(row.id)) {
+              joinedRef.current.add(row.id);
+              try { await joinConsult(row.id, row.twilio_room, "doctor"); }
+              catch (e: any) { setError(e?.message ?? "Join failed"); }
+            }
+          }
+        )
+        .subscribe((s) => console.log("[Doctor] subscription:", s));
+
+      // keep WS auth fresh
+      unsub = supabase.auth.onAuthStateChange((_e, s) => {
+        supabase.realtime.setAuth(s?.access_token ?? "");
+      }).data.subscription;
+    })();
+
     return () => {
-      supabase.removeChannel(channel);
+      cancelled = true;
+      if (channel) supabase.removeChannel(channel);
+      unsub?.unsubscribe();
     };
   }, []);
 
   return (
     <div>
-      <h3>Consult Status Watcher</h3>
+      <h3>Doctor Consult Watcher</h3>
       {error && <p style={{ color: "red" }}>Error: {error}</p>}
-      <pre>{status ? JSON.stringify(status, null, 2) : "No updates yet"}</pre>
+      <pre>{last ? JSON.stringify(last, null, 2) : "No updates yet"}</pre>
     </div>
   );
+}
+
+// Shared helper (same endpoint both sides use)
+async function joinConsult(consultId: string, room: string, role: "doctor" | "patient") {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) throw new Error("not_authenticated");
+
+  const resp = await fetch("/api/twilio/token", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      authorization: `Bearer ${session.access_token}`,
+    },
+    body: JSON.stringify({ consult_id: consultId }),
+    cache: "no-store",
+  });
+
+  const body = await resp.json().catch(() => ({}));
+  if (!resp.ok) throw new Error(body?.error ?? "token_failed");
+
+  // Navigate to each side’s call UI (adjust paths to your routes)
+  const path = role === "doctor"
+    ? `/dashboard/doctor/call?consult_id=${consultId}`
+    : `/dashboard/patient/call?consult_id=${consultId}`;
+
+  window.location.assign(path);
+
+  // Or, if you connect inline here:
+  // import { connect } from "twilio-video";
+  // await connect(body.token, { name: room, audio: true, video: false });
 }

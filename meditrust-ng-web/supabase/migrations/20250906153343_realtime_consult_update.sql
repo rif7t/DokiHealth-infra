@@ -6,7 +6,7 @@ as $$
 begin
     -- if new.status = 'accepted' then
     perform realtime.broadcast_changes(
-        'consults',
+        'consult',
         tg_op,
         tg_op,
         tg_table_name,

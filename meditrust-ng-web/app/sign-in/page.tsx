@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
+import { getSession } from "@/lib/sessionCache";
 
 export default function SignInPage() {
   const [email, setEmail] = useState("");
@@ -38,7 +39,7 @@ export default function SignInPage() {
       return;
     }
 
-    const session = data.session;
+    const session = getSession();
     if (!session) {
       setErrorMessage("Could not start session");
       setErrorModal(true);
