@@ -249,16 +249,8 @@ export function ConsultStatusWatcher() {
             }
 
             // BOTH SIDES: when status is "connecting" and room exists, join (once)
-            if (newStatus === "connecting" && newRow?.twilio_room) {
-              if (!joinedCallsRef.current.has(consultId)) {
-                joinedCallsRef.current.add(consultId);
-                try {
-                  await joinConsult(consultId, newRow.twilio_room);
-                } catch (e: any) {
-                  console.error("Join error:", e);
-                  setError(e?.message ?? "Join failed");
-                }
-              }
+            if (newStatus === "connecting") {
+              joinConsult(consultId);
             }
           }
         );
@@ -306,31 +298,9 @@ export function ConsultStatusWatcher() {
 
 // --- Helpers --- //
 
-async function joinConsult(consultId: string, room: string) {
-  // 1) Ask your server for a Twilio token (server re-checks eligibility: patient/doctor, escrow held, status connecting)
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) throw new Error("not_authenticated");
+async function joinConsult(consultId: string) {
 
-  const resp = await fetch("/api/twilio/token", {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      authorization: `Bearer ${session.access_token}`,
-    },
-    body: JSON.stringify({ consult_id: consultId }),
-    cache: "no-store",
-  });
-
-  const body = await resp.json().catch(() => ({}));
-  if (!resp.ok) throw new Error(body?.error ?? "token_failed");
-
-  // 2) Either connect here via Twilio SDK, or navigate to your call UI.
-  // If you have a call page that does the connect, navigate:
   window.location.assign(`/dashboard/patient/call?consult_id=${consultId}`);
-
-  // If you prefer to connect here instead, install twilio-video and:
-  
-  await connect(body.token, { name: room, audio: true, video: false });
 }
 
 export async function initPayment(consultId: string) {
