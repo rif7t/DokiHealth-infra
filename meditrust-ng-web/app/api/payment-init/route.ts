@@ -25,18 +25,22 @@ export async function POST(req: NextRequest) {
           Authorization: token,
           apikey: process.env.NEXT_PUBLIC_PUBLISHABLE_KEY!,
         },
-        body: JSON.stringify({ consult_id }),
+        body: JSON.stringify({ consult_id, action: "init" }),
       }
     );
-    
-    if (!res.ok) throw new Error(await res.json());
+    if (!res.ok) {
+  const errorBody = await res.json().catch(() => ({}));
+  throw new Error(errorBody.message ?? JSON.stringify(errorBody));
+    }
+
     const payment_info = await res.json();
     let authorization_url = payment_info.authorization_url;
     let reference = payment_info.reference;
     let amount_kobo = payment_info.amount_kobo;
     let currency = payment_info.currency;
     
-    return NextResponse.json({authorization_url, reference, amount_kobo, currency});
+    return NextResponse.json({authorization_url: String(authorization_url), 
+      reference: String(reference), amount_kobo: Number(amount_kobo), currency: String(currency),});
   } catch (err: any) {
     console.error("Payment Init Error:", err);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });

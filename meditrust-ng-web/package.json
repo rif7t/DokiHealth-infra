@@ -21,6 +21,8 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "sharp": "^0.34.3",
+    "twilio": "^5.9.0",
+    "twilio-video": "^2.32.0",
     "zustand": "4.5.5"
   },
   "devDependencies": {
