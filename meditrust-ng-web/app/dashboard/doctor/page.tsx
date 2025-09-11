@@ -5,7 +5,10 @@ import { supabase } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
 import DoctorBell from "@/components/DoctorBell";
 import { subscribe } from "@/lib/eventBus";
+import { useRef } from "react";
 import { KeyboardDismissWrapper } from "@/components/KeyboardDismissWrapper";
+import { connect } from "twilio-video";
+import toast from "react-hot-toast";
 
 export default function DoctorDashboard() {
   const [tab, setTab] = useState("overview");
@@ -21,19 +24,28 @@ export default function DoctorDashboard() {
   const [consult, setConsult] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const [showToast, setShowToast] = useState(false);
-
+  const [session, setSession] = useState<any | null>(null);
+  const [loadingSession, setLoadingSession] = useState(true);
+  const [cstatus, setCstatus] = useState<any | null>(null);
   const router = useRouter();
+  const audioRef = useRef<HTMLAudioElement | null>(null);      
+
+  
 
   // 🔔 Subscription to new consults
   useEffect(() => {
     const unsubscribe = subscribe("new-consult", () => {
       setShowToast(true);
-      const audio = new Audio("@/public/notifications/consult-notif.wav");
-      audio.play().catch((e) => console.error("Sound play failed:", e));
+      if (!audioRef.current) {
+          audioRef.current = new Audio("/notifications/consult-notif.mp3");
+        }
+        audioRef.current.play();
       setTimeout(() => setShowToast(false), 2000);
     });
     return () => unsubscribe();
   }, []);
+
+  
 
   // Fetch consults for logged-in doctor
   useEffect(() => {
@@ -77,6 +89,7 @@ export default function DoctorDashboard() {
       const {
         data: { session },
       } = await supabase.auth.getSession();
+      
       if (!session) return router.replace("/sign-in");
 
       const res = await fetch("/api/profile", {
@@ -184,6 +197,166 @@ export default function DoctorDashboard() {
     await supabase.auth.signOut();
     router.replace("/sign-in");
   };
+  type RC = ReturnType<typeof supabase.channel>;
+
+function ConsultStatusWatcher() {
+  const [status, setStatus] = useState<any | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const chRef = useRef<RC | null>(null);
+  const authSubRef = useRef<{ unsubscribe: () => void } | null>(null);
+  const [isAssigned, setIsAssigned] = useState(false);
+  
+  const [timeLeft, setTimeLeft] = useState(60); 
+  const [timerActive, setTimerActive] = useState(false);
+
+  useEffect(() => {
+    
+    let cancelled = false;
+    
+        const subscribeWithCurrentToken = async () => {
+          const { data: { session } } = await supabase.auth.getSession();
+          supabase.realtime.setAuth(session?.access_token ?? "");
+    
+          if (chRef.current) supabase.removeChannel(chRef.current);
+    
+          const ch = supabase
+            .channel("profile-realtime")
+            .on(
+              "postgres_changes",
+              { event: "*", schema: "public", table: "profile" },
+              async (payload) => {
+                console.log("Profile Change received!", payload);
+    
+                if (payload.eventType !== "UPDATE") return;
+                const newRow = (payload as any).new;
+                const oldRow = (payload as any).old;
+                const isAssigned: boolean | undefined = newRow?.is_assigned;
+                const consultId: string | undefined = newRow?.consult_id;
+                const isConnecting: boolean | undefined = newRow?.is_connecting;
+
+                setStatus(isAssigned);
+                if (oldRow.is_assigned !== newRow.is_assigned && newRow.is_assigned === true) {
+                  console.log("Start timer");
+                  setIsAssigned(true);
+
+                }
+    
+                // BOTH SIDES: when status is "connecting" and room exists, join (once)
+                if (Boolean(isConnecting)) {
+                  console.log("Is Connecting is true, ");
+                  await joinConsult(consultId);
+                  
+                  const {error:err} = await supabase.from("profile")
+                  .update({is_connecting: false,
+                    is_assigned: false,
+                    consult_id: null,
+                    room: null,
+                  })
+                  .eq("id", session.user.id);
+
+                  if(err){
+                    console.error("User failed to reset is_connecting");
+                  }
+                }
+              }
+            );
+    
+          ch.subscribe((s) => console.log("[consult-realtime] status:", s));
+          chRef.current = ch;
+        };
+    
+        // first subscribe after token set
+        subscribeWithCurrentToken();
+    
+        // resubscribe on auth change
+        const { data } = supabase.auth.onAuthStateChange((_evt, newSession) => {
+          supabase.realtime.setAuth(newSession?.access_token ?? "");
+          if (!cancelled) subscribeWithCurrentToken();
+        });
+        authSubRef.current = data.subscription;
+    
+        return () => {
+          cancelled = true;
+          if (chRef.current) supabase.removeChannel(chRef.current);
+          authSubRef.current?.unsubscribe();
+        };
+  }, []);
+
+  useEffect(() => {
+  if (!isAssigned) return;
+
+  setTimerActive(true);
+  setTimeLeft(60);
+
+  const interval = setInterval(() => {
+    setTimeLeft(prev => {
+      if (prev <= 1) {
+        clearInterval(interval);
+        handleTimeoutReset();
+        return 0;
+      }
+      return prev - 1;
+    });
+  }, 1000);
+
+  return () => clearInterval(interval);
+}, [isAssigned]);
+
+async function handleTimeoutReset() {
+  console.log("⏰ Timer expired, resetting consult…");
+
+  // 1. Kill the timer
+  setTimerActive(false);
+  setTimeLeft(60);
+
+  // 2. Show a toast
+  toast.error("Patient was unable to join the consult in time.");
+
+  // 3. Reset DB state
+  const { data: { session } } = await supabase.auth.getSession();
+  if (session?.user?.id) {
+    const { error } = await supabase
+      .from("profile")
+      .update({
+        is_assigned: false,
+        consult_id: null,
+        room: null,
+        status: "ended",
+        ended_at: new Date().toISOString(),
+      })
+      .eq("id", session.user.id);
+
+    if (error) {
+      console.error("❌ Failed to reset consult:", error.message);
+      toast.error("Reset failed, please try again.");
+    } else {
+      console.log("✅ Consult reset successfully");
+    }
+  }
+}
+
+  return (
+    <div>
+      <h3>Consult Status Watcher</h3>
+      {error && <p style={{ color: "red" }}>Error: {error}</p>}
+      <pre>{status ? JSON.stringify(status, null, 2) : "No updates yet"}</pre>
+    </div>
+  );
+}
+
+
+// Shared helper (same endpoint both sides use)
+async function joinConsult(consultId: string) {
+
+   return window.location.assign(
+  `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/doctor/call?consult_id=${consultId}`
+);
+
+ 
+}
+
+  ConsultStatusWatcher();
+
 
   return (
     <KeyboardDismissWrapper>
@@ -201,7 +374,7 @@ export default function DoctorDashboard() {
 
         {/* Tabs */}
         <div className="flex space-x-2 bg-slate-50 p-2">
-          {["overview", "history", "account", "payouts"].map((t) => (
+          {["overview", "history","payouts","account"].map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
@@ -215,7 +388,7 @@ export default function DoctorDashboard() {
         </div>
 
         {/* Overview */}
-{tab === "overview" && (
+  {tab === "overview" && (
   <div className="p-3 sm:p-4 space-y-4 sm:space-y-6">
     
     {/* Welcome Header */}
@@ -228,12 +401,7 @@ export default function DoctorDashboard() {
       </div>
       <div className="flex items-center justify-end  gap-3">
             <DoctorBell />
-            <button
-              onClick={signOut}
-              className="bg-red-100 text-red-600 px-3 py-2 rounded-lg text-xs font-semibold"
-            >
-              Sign Out
-            </button>
+            
           </div>
     </div>
 
@@ -324,10 +492,10 @@ export default function DoctorDashboard() {
       {consultations.length === 0 ? (
         <div className="text-center py-8 sm:py-12">
           <div className="w-12 h-12 sm:w-16 sm:h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
-            <span className="text-xl sm:text-2xl">📅</span>
+            <span className="text-xl sm:text-2xl"></span>
           </div>
-          <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-1 sm:mb-2">No consultations scheduled</h3>
-          <p className="text-gray-600 text-xs sm:text-sm">You have no patient consultations for today. Take some time to rest!</p>
+          <h3 className="text-base sm:text-lg font-semibold text-gray-800 mb-1 sm:mb-2">No consultations yet</h3>
+          <p className="text-gray-600 text-xs sm:text-sm">You've had no patient consultations today.</p>
         </div>
       ) : (
         <div className="space-y-3 sm:space-y-4">
@@ -414,21 +582,84 @@ export default function DoctorDashboard() {
           </div>
         )}
 
-        {/* Account */}
+        {/* Payouts */}
+        {tab === "payouts" && (
+          <div className="p-4 space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-white rounded-lg p-4 shadow text-center">
+                <p className="text-2xl font-bold text-blue-600">
+                  ₦
+                  {payouts
+                    .filter((p) => p.status === "paid")
+                    .reduce((sum, p) => sum + p.amount, 0)}
+                </p>
+                <p className="text-slate-600">This Month</p>
+              </div>
+              <div className="bg-white rounded-lg p-4 shadow text-center">
+                <p className="text-2xl font-bold text-green-600">
+                  ₦
+                  {payouts
+                    .filter((p) => p.status === "pending")
+                    .reduce((sum, p) => sum + p.amount, 0)}
+                </p>
+                <p className="text-slate-600">Pending</p>
+              </div>
+            </div>
+            <div className="bg-white rounded-lg p-4 shadow">
+              <h2 className="font-semibold text-black mb-3">Payout History</h2>
+              {payouts.length === 0 ? (
+                <p className="text-slate-500">No payout history yet.</p>
+              ) : (
+                payouts.map((p) => (
+                  <div
+                    key={p.id}
+                    className="flex justify-between border-b py-2 last:border-none"
+                  >
+                    <div>
+                      <h4 className="font-semibold">₦{p.amount}</h4>
+                      <p className="text-sm text-slate-500">
+                        {new Date(p.created_at).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <span
+                      className={`text-xs px-2 py-1 rounded ${
+                        p.status === "paid"
+                          ? "bg-green-100 text-green-600"
+                          : "bg-yellow-100 text-yellow-600"
+                      }`}
+                    >
+                      {p.status}
+                    </span>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        )}
+
+          {/* Account */}
         {tab === "account" && (
   <div className="p-4 space-y-6">
     <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 space-y-6">
       
       {/* Header */}
-      <div className="border-b border-gray-100 pb-4">
-        <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
-          <span className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-            👨‍⚕️
-          </span>
-          Doctor Profile
-        </h2>
-        <p className="text-sm text-gray-600 mt-1">Manage your professional information and payment details</p>
-      </div>
+      <div className="border-b border-gray-100 pb-4 flex items-center justify-between">
+  <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+    Doctor Profile
+  </h2>
+
+  <button
+    onClick={signOut}
+    className="bg-red-100 text-red-600 px-3 py-2 rounded-lg text-xs font-semibold hover:bg-red-200"
+  >
+    Sign Out
+  </button>
+</div>
+
+<p className="text-sm text-gray-600 mt-1">
+  Manage your professional information and payment details
+</p>
+
 
       {/* Personal Information Section */}
       <div className="space-y-4">
@@ -615,64 +846,13 @@ export default function DoctorDashboard() {
         </button>
       </div>
     </div>
-  </div>
-)}
-
-        {/* Payouts */}
-        {tab === "payouts" && (
-          <div className="p-4 space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-white rounded-lg p-4 shadow text-center">
-                <p className="text-2xl font-bold text-blue-600">
-                  ₦
-                  {payouts
-                    .filter((p) => p.status === "paid")
-                    .reduce((sum, p) => sum + p.amount, 0)}
-                </p>
-                <p className="text-slate-600">This Month</p>
-              </div>
-              <div className="bg-white rounded-lg p-4 shadow text-center">
-                <p className="text-2xl font-bold text-green-600">
-                  ₦
-                  {payouts
-                    .filter((p) => p.status === "pending")
-                    .reduce((sum, p) => sum + p.amount, 0)}
-                </p>
-                <p className="text-slate-600">Pending</p>
-              </div>
-            </div>
-            <div className="bg-white rounded-lg p-4 shadow">
-              <h2 className="font-semibold text-black mb-3">Payout History</h2>
-              {payouts.length === 0 ? (
-                <p className="text-slate-500">No payout history yet.</p>
-              ) : (
-                payouts.map((p) => (
-                  <div
-                    key={p.id}
-                    className="flex justify-between border-b py-2 last:border-none"
-                  >
-                    <div>
-                      <h4 className="font-semibold">₦{p.amount}</h4>
-                      <p className="text-sm text-slate-500">
-                        {new Date(p.created_at).toLocaleDateString()}
-                      </p>
-                    </div>
-                    <span
-                      className={`text-xs px-2 py-1 rounded ${
-                        p.status === "paid"
-                          ? "bg-green-100 text-green-600"
-                          : "bg-yellow-100 text-yellow-600"
-                      }`}
-                    >
-                      {p.status}
-                    </span>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-        )}
+   </div>
+ )}
       </div>
     </KeyboardDismissWrapper>
   );
 }
+
+
+
+
