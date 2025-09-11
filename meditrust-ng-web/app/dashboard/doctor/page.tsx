@@ -694,35 +694,75 @@ export default function DoctorDashboard() {
   );
 }
 
+type RC = ReturnType<typeof supabase.channel>;
 
 export function ConsultStatusWatcher() {
   const [status, setStatus] = useState<any | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const chRef = useRef<RC | null>(null);
+  const authSubRef = useRef<{ unsubscribe: () => void } | null>(null);
 
   useEffect(() => {
-    console.log("SETTING UP SUBSCRIPTION");
-    const channel = supabase
-      .channel("profile-realtime")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "profile" },
-        async (payload) => {
-          console.log("Change received!", payload);
+    
+    let cancelled = false;
+    
+        const subscribeWithCurrentToken = async () => {
+          const { data: { session } } = await supabase.auth.getSession();
+          supabase.realtime.setAuth(session?.access_token ?? "");
+    
+          if (chRef.current) supabase.removeChannel(chRef.current);
+    
+          const ch = supabase
+            .channel("profile-realtime")
+            .on(
+              "postgres_changes",
+              { event: "*", schema: "public", table: "profile" },
+              async (payload) => {
+                console.log("Profile Change received!", payload);
+    
+                if (payload.eventType !== "UPDATE") return;
+                const newRow = (payload as any).new;
+                const newStatus: boolean | undefined = newRow?.is_assigned;
+                const consultId: string | undefined = newRow?.consult_id;
+                const isConnecting: boolean | undefined = newRow?.is_connecting;
 
-          if (payload.eventType == "UPDATE") {
-            setStatus(payload.new);
-            if(payload.new.is_connecting)
-              joinConsult(payload.new.consult_id);
-            
-          }
-        }
-      )
-      .subscribe((status) => console.log("Subscription status:", status));
+                setStatus(newStatus);
+    
+                // BOTH SIDES: when status is "connecting" and room exists, join (once)
+                if (Boolean(isConnecting)) {
+                  console.log("Is Connecting is true, ");
+                  const resp = await joinConsult(consultId);
+                  
+                  const {error:err} = await supabase.from("profile")
+                  .update({is_connecting: false})
+                  .eq("id", session.user.id);
 
-    // Cleanup subscription when component unmounts
-    return () => {
-      supabase.removeChannel(channel);
-    };
+                  if(err){
+                    console.error("User failed to reset is_connecting");
+                  }
+                }
+              }
+            );
+    
+          ch.subscribe((s) => console.log("[consult-realtime] status:", s));
+          chRef.current = ch;
+        };
+    
+        // first subscribe after token set
+        subscribeWithCurrentToken();
+    
+        // resubscribe on auth change
+        const { data } = supabase.auth.onAuthStateChange((_evt, newSession) => {
+          supabase.realtime.setAuth(newSession?.access_token ?? "");
+          if (!cancelled) subscribeWithCurrentToken();
+        });
+        authSubRef.current = data.subscription;
+    
+        return () => {
+          cancelled = true;
+          if (chRef.current) supabase.removeChannel(chRef.current);
+          authSubRef.current?.unsubscribe();
+        };
   }, []);
 
   return (
@@ -735,33 +775,9 @@ export function ConsultStatusWatcher() {
 }
 
 
-
-
-
-
 // Shared helper (same endpoint both sides use)
 async function joinConsult(consultId: string) {
-  const { data: { session } } = await supabase.auth.getSession();
-  if (!session) throw new Error("not_authenticated");
 
-  const resp = await fetch("/api/twilio/token", {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      authorization: `Bearer ${session.access_token}`,
-    },
-    body: JSON.stringify({ consult_id: consultId }),
-    cache: "no-store",
-  });
-
-  const body = await resp.json().catch(() => ({}));
-  if (!resp.ok) throw new Error(body?.error ?? "token_failed");
-
-  // Navigate to each side’s call UI (adjust paths to your routes;
-
-  // window.location.assign(path);
-
-  // Or, if you connect inline here:
-  
-  window.location.assign(`/dashboard/doctor/call?consult_id=${consultId}`);
+   return window.location.assign(`/dashboard/doctor/call?consult_id=${consultId}`);
+ 
 }
