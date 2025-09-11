@@ -69,7 +69,7 @@ export default function PatientDashboard() {
     setLoading(true);
     // Now create a consult request
     await startConsult(symptom);
-    alert("✅ Consultation request submitted successfully!")
+    // alert("✅ Consultation request submitted successfully!")
 
   } catch (e: any) {
     console.error("Error creating consultation:", e.message);
