@@ -12,14 +12,29 @@ export default function DoctorBell() {
   // fetch pending consults for this doctor
   const fetchConsults = async () => {
 
-    supabase
-    .channel('testing')
-    .on(
-      'postgres_changes',
-      { event: '*', schema: 'public', table: 'profile' },
-      payload => console.log('Change:', payload)
-    )
-    .subscribe();
+    // supabase
+    // .channel('testing')
+    // .on(
+    //   'postgres_changes',
+    //   { event: '*', schema: 'public', table: 'profile' },
+    //   payload => console.log('Change:', payload)
+    // )
+    // .subscribe();
+
+  //   supabase
+  // .channel("testing")
+  // .on(
+  //   "postgres_changes",
+  //   { event: "UPDATE", schema: "public", table: "profile" },
+  //   (payload) => {
+  //     console.log("Change:", payload);
+  //     if(payload.new.status === true ){
+        
+  //     }
+  //   }
+  // )
+  // .subscribe();
+
 
 
 
