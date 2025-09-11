@@ -8,6 +8,7 @@ import { subscribe } from "@/lib/eventBus";
 import { useRef } from "react";
 import { KeyboardDismissWrapper } from "@/components/KeyboardDismissWrapper";
 import { connect } from "twilio-video";
+import toast from "react-hot-toast";
 
 export default function DoctorDashboard() {
   const [tab, setTab] = useState("overview");
@@ -701,6 +702,10 @@ export function ConsultStatusWatcher() {
   const [error, setError] = useState<string | null>(null);
   const chRef = useRef<RC | null>(null);
   const authSubRef = useRef<{ unsubscribe: () => void } | null>(null);
+  const [isAssigned, setIsAssigned] = useState(false);
+  
+  const [timeLeft, setTimeLeft] = useState(60); 
+  const [timerActive, setTimerActive] = useState(false);
 
   useEffect(() => {
     
@@ -722,19 +727,29 @@ export function ConsultStatusWatcher() {
     
                 if (payload.eventType !== "UPDATE") return;
                 const newRow = (payload as any).new;
-                const newStatus: boolean | undefined = newRow?.is_assigned;
+                const oldRow = (payload as any).old;
+                const isAssigned: boolean | undefined = newRow?.is_assigned;
                 const consultId: string | undefined = newRow?.consult_id;
                 const isConnecting: boolean | undefined = newRow?.is_connecting;
 
-                setStatus(newStatus);
+                setStatus(isAssigned);
+                if (oldRow.is_assigned !== newRow.is_assigned && newRow.is_assigned === true) {
+                  console.log("Start timer");
+                  setIsAssigned(true);
+
+                }
     
                 // BOTH SIDES: when status is "connecting" and room exists, join (once)
                 if (Boolean(isConnecting)) {
                   console.log("Is Connecting is true, ");
-                  const resp = await joinConsult(consultId);
+                  await joinConsult(consultId);
                   
                   const {error:err} = await supabase.from("profile")
-                  .update({is_connecting: false})
+                  .update({is_connecting: false,
+                    is_assigned: false,
+                    consult_id: null,
+                    room: null,
+                  })
                   .eq("id", session.user.id);
 
                   if(err){
@@ -765,6 +780,59 @@ export function ConsultStatusWatcher() {
         };
   }, []);
 
+  useEffect(() => {
+  if (!isAssigned) return;
+
+  setTimerActive(true);
+  setTimeLeft(60);
+
+  const interval = setInterval(() => {
+    setTimeLeft(prev => {
+      if (prev <= 1) {
+        clearInterval(interval);
+        handleTimeoutReset();
+        return 0;
+      }
+      return prev - 1;
+    });
+  }, 1000);
+
+  return () => clearInterval(interval);
+}, [isAssigned]);
+
+async function handleTimeoutReset() {
+  console.log("⏰ Timer expired, resetting consult…");
+
+  // 1. Kill the timer
+  setTimerActive(false);
+  setTimeLeft(60);
+
+  // 2. Show a toast
+  toast.error("Patient was unable to join the consult in time.");
+
+  // 3. Reset DB state
+  const { data: { session } } = await supabase.auth.getSession();
+  if (session?.user?.id) {
+    const { error } = await supabase
+      .from("profile")
+      .update({
+        is_assigned: false,
+        consult_id: null,
+        room: null,
+        status: "ended",
+        ended_at: new Date().toISOString(),
+      })
+      .eq("id", session.user.id);
+
+    if (error) {
+      console.error("❌ Failed to reset consult:", error.message);
+      toast.error("Reset failed, please try again.");
+    } else {
+      console.log("✅ Consult reset successfully");
+    }
+  }
+}
+
   return (
     <div>
       <h3>Consult Status Watcher</h3>
@@ -778,6 +846,11 @@ export function ConsultStatusWatcher() {
 // Shared helper (same endpoint both sides use)
 async function joinConsult(consultId: string) {
 
-   return window.location.assign(`/dashboard/doctor/call?consult_id=${consultId}`);
+   return window.location.assign(
+  `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/doctor/call?consult_id=${consultId}`
+);
+
  
 }
+
+

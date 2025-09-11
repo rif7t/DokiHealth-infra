@@ -299,8 +299,8 @@ export function ConsultStatusWatcher() {
 // --- Helpers --- //
 
 async function joinConsult(consultId: string) {
-
-  window.location.assign(`/dashboard/patient/call?consult_id=${consultId}`);
+  return window.location.assign(
+  `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/patient/call?consult_id=${consultId}`);
 }
 
 export async function initPayment(consultId: string) {
