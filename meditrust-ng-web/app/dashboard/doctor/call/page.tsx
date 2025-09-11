@@ -1,18 +1,23 @@
 
+
 // "use client";
-// import { useEffect, useRef, useState } from "react";
-// import { Suspense } from "react";
+
+// import { Suspense, useEffect, useRef, useState } from "react";
+// import { useRouter } from "next/navigation";
 // import { useSearchParams } from "next/navigation";
 // import { supabase } from "@/lib/supabaseClient";
 
-// export default function DoctorCallPage() {
+// // Force dynamic rendering (no prerendering at build time)
+// export const dynamic = "force-dynamic";
+
+// function DoctorCallInner() {
 //   const sp = useSearchParams();
 //   const consultId = sp.get("consult_id") ?? "";
 //   const [err, setErr] = useState<string | null>(null);
+
 //   const userIdRef = useRef<string | null>(null);
 //   const remoteRef = useRef<HTMLDivElement | null>(null);
 //   const localRef = useRef<HTMLDivElement | null>(null);
-  
 //   const roomRef = useRef<any>(null);
 
 //   useEffect(() => {
@@ -88,8 +93,7 @@
 //         // 6. Handle disconnection
 //         room.on("disconnected", async () => {
 //           console.log("👋 Room disconnected, cleaning up profile…");
-//           const { data: { session } } = await supabase.auth.getSession();
-//           if (session?.user?.id) {
+//           if (userIdRef.current) {
 //             await resetProfile(userIdRef.current);
 //             await setConsult(consultId, "ended");
 //           }
@@ -112,12 +116,13 @@
 //         roomRef.current.disconnect();
 //       }
 //       (async () => {
-//         await resetProfile(userIdRef.current);
-//         await setConsult(consultId, "ended");
-//     })();
+//         if (userIdRef.current) {
+//           await resetProfile(userIdRef.current);
+//           await setConsult(consultId, "ended");
+//         }
+//       })();
 //       roomRef.current = null;
 //     };
-
 //   }, [consultId]);
 
 //   if (!consultId) {
@@ -140,6 +145,16 @@
 //     </div>
 //   );
 // }
+
+// export default function DoctorCallPage() {
+//   return (
+//     <Suspense fallback={<div className="p-4">Loading call…</div>}>
+//       <DoctorCallInner />
+//     </Suspense>
+//   );
+// }
+
+// // --- helpers ---
 
 // async function resetProfile(userId: string) {
 //   const { data, error } = await supabase
@@ -185,11 +200,10 @@
 //   }
 // }
 
-// app/dashboard/doctor/call/page.tsx
 "use client";
 
 import { Suspense, useEffect, useRef, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 
 // Force dynamic rendering (no prerendering at build time)
@@ -199,11 +213,20 @@ function DoctorCallInner() {
   const sp = useSearchParams();
   const consultId = sp.get("consult_id") ?? "";
   const [err, setErr] = useState<string | null>(null);
+  const router = useRouter();
 
   const userIdRef = useRef<string | null>(null);
   const remoteRef = useRef<HTMLDivElement | null>(null);
   const localRef = useRef<HTMLDivElement | null>(null);
   const roomRef = useRef<any>(null);
+
+  // --- Cleanup helpers ---
+  const cleanupConsult = async () => {
+    if (userIdRef.current) {
+      await resetProfile(userIdRef.current);
+      await setConsult(consultId, "ended");
+    }
+  };
 
   useEffect(() => {
     if (!consultId) return;
@@ -278,10 +301,7 @@ function DoctorCallInner() {
         // 6. Handle disconnection
         room.on("disconnected", async () => {
           console.log("👋 Room disconnected, cleaning up profile…");
-          if (userIdRef.current) {
-            await resetProfile(userIdRef.current);
-            await setConsult(consultId, "ended");
-          }
+          await cleanupConsult();
         });
 
         // Ensure cleanup on tab close
@@ -295,24 +315,34 @@ function DoctorCallInner() {
       }
     })();
 
+    // --- handle browser back arrow ---
+    const handlePopState = async () => {
+      console.log("⬅ Browser back detected, cleaning up…");
+      await cleanupConsult();
+    };
+    window.addEventListener("popstate", handlePopState);
+
     return () => {
       // Cleanup on unmount
       if (roomRef.current && roomRef.current.state !== "disconnected") {
         roomRef.current.disconnect();
       }
-      (async () => {
-        if (userIdRef.current) {
-          await resetProfile(userIdRef.current);
-          await setConsult(consultId, "ended");
-        }
-      })();
+      (async () => await cleanupConsult())();
       roomRef.current = null;
+
+      window.removeEventListener("popstate", handlePopState);
     };
   }, [consultId]);
 
   if (!consultId) {
     return <div className="p-4 text-blue-500">Missing consult_id</div>;
   }
+
+  // Back button handler
+  const handleBack = async () => {
+    await cleanupConsult();
+    router.push("/dashboard/doctor");
+  };
 
   return (
     <div className="p-4 space-y-3">
@@ -327,6 +357,14 @@ function DoctorCallInner() {
           <div ref={remoteRef} />
         </div>
       </div>
+
+      {/* Back Button */}
+      <button
+        onClick={handleBack}
+        className="mt-4 px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
+      >
+        ⬅ Back to Dashboard
+      </button>
     </div>
   );
 }
@@ -340,7 +378,6 @@ export default function DoctorCallPage() {
 }
 
 // --- helpers ---
-
 async function resetProfile(userId: string) {
   const { data, error } = await supabase
     .from("profile")
