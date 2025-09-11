@@ -197,8 +197,166 @@ export default function DoctorDashboard() {
     await supabase.auth.signOut();
     router.replace("/sign-in");
   };
+  type RC = ReturnType<typeof supabase.channel>;
+
+function ConsultStatusWatcher() {
+  const [status, setStatus] = useState<any | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const chRef = useRef<RC | null>(null);
+  const authSubRef = useRef<{ unsubscribe: () => void } | null>(null);
+  const [isAssigned, setIsAssigned] = useState(false);
+  
+  const [timeLeft, setTimeLeft] = useState(60); 
+  const [timerActive, setTimerActive] = useState(false);
+
+  useEffect(() => {
+    
+    let cancelled = false;
+    
+        const subscribeWithCurrentToken = async () => {
+          const { data: { session } } = await supabase.auth.getSession();
+          supabase.realtime.setAuth(session?.access_token ?? "");
+    
+          if (chRef.current) supabase.removeChannel(chRef.current);
+    
+          const ch = supabase
+            .channel("profile-realtime")
+            .on(
+              "postgres_changes",
+              { event: "*", schema: "public", table: "profile" },
+              async (payload) => {
+                console.log("Profile Change received!", payload);
+    
+                if (payload.eventType !== "UPDATE") return;
+                const newRow = (payload as any).new;
+                const oldRow = (payload as any).old;
+                const isAssigned: boolean | undefined = newRow?.is_assigned;
+                const consultId: string | undefined = newRow?.consult_id;
+                const isConnecting: boolean | undefined = newRow?.is_connecting;
+
+                setStatus(isAssigned);
+                if (oldRow.is_assigned !== newRow.is_assigned && newRow.is_assigned === true) {
+                  console.log("Start timer");
+                  setIsAssigned(true);
+
+                }
+    
+                // BOTH SIDES: when status is "connecting" and room exists, join (once)
+                if (Boolean(isConnecting)) {
+                  console.log("Is Connecting is true, ");
+                  await joinConsult(consultId);
+                  
+                  const {error:err} = await supabase.from("profile")
+                  .update({is_connecting: false,
+                    is_assigned: false,
+                    consult_id: null,
+                    room: null,
+                  })
+                  .eq("id", session.user.id);
+
+                  if(err){
+                    console.error("User failed to reset is_connecting");
+                  }
+                }
+              }
+            );
+    
+          ch.subscribe((s) => console.log("[consult-realtime] status:", s));
+          chRef.current = ch;
+        };
+    
+        // first subscribe after token set
+        subscribeWithCurrentToken();
+    
+        // resubscribe on auth change
+        const { data } = supabase.auth.onAuthStateChange((_evt, newSession) => {
+          supabase.realtime.setAuth(newSession?.access_token ?? "");
+          if (!cancelled) subscribeWithCurrentToken();
+        });
+        authSubRef.current = data.subscription;
+    
+        return () => {
+          cancelled = true;
+          if (chRef.current) supabase.removeChannel(chRef.current);
+          authSubRef.current?.unsubscribe();
+        };
+  }, []);
+
+  useEffect(() => {
+  if (!isAssigned) return;
+
+  setTimerActive(true);
+  setTimeLeft(60);
+
+  const interval = setInterval(() => {
+    setTimeLeft(prev => {
+      if (prev <= 1) {
+        clearInterval(interval);
+        handleTimeoutReset();
+        return 0;
+      }
+      return prev - 1;
+    });
+  }, 1000);
+
+  return () => clearInterval(interval);
+}, [isAssigned]);
+
+async function handleTimeoutReset() {
+  console.log("⏰ Timer expired, resetting consult…");
+
+  // 1. Kill the timer
+  setTimerActive(false);
+  setTimeLeft(60);
+
+  // 2. Show a toast
+  toast.error("Patient was unable to join the consult in time.");
+
+  // 3. Reset DB state
+  const { data: { session } } = await supabase.auth.getSession();
+  if (session?.user?.id) {
+    const { error } = await supabase
+      .from("profile")
+      .update({
+        is_assigned: false,
+        consult_id: null,
+        room: null,
+        status: "ended",
+        ended_at: new Date().toISOString(),
+      })
+      .eq("id", session.user.id);
+
+    if (error) {
+      console.error("❌ Failed to reset consult:", error.message);
+      toast.error("Reset failed, please try again.");
+    } else {
+      console.log("✅ Consult reset successfully");
+    }
+  }
+}
+
+  return (
+    <div>
+      <h3>Consult Status Watcher</h3>
+      {error && <p style={{ color: "red" }}>Error: {error}</p>}
+      <pre>{status ? JSON.stringify(status, null, 2) : "No updates yet"}</pre>
+    </div>
+  );
+}
+
+
+// Shared helper (same endpoint both sides use)
+async function joinConsult(consultId: string) {
+
+   return window.location.assign(
+  `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/doctor/call?consult_id=${consultId}`
+);
+
+ 
+}
 
   ConsultStatusWatcher();
+
 
   return (
     <KeyboardDismissWrapper>
@@ -230,7 +388,7 @@ export default function DoctorDashboard() {
         </div>
 
         {/* Overview */}
-{tab === "overview" && (
+  {tab === "overview" && (
   <div className="p-3 sm:p-4 space-y-4 sm:space-y-6">
     
     {/* Welcome Header */}
@@ -695,162 +853,6 @@ export default function DoctorDashboard() {
   );
 }
 
-type RC = ReturnType<typeof supabase.channel>;
 
-export function ConsultStatusWatcher() {
-  const [status, setStatus] = useState<any | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const chRef = useRef<RC | null>(null);
-  const authSubRef = useRef<{ unsubscribe: () => void } | null>(null);
-  const [isAssigned, setIsAssigned] = useState(false);
-  
-  const [timeLeft, setTimeLeft] = useState(60); 
-  const [timerActive, setTimerActive] = useState(false);
-
-  useEffect(() => {
-    
-    let cancelled = false;
-    
-        const subscribeWithCurrentToken = async () => {
-          const { data: { session } } = await supabase.auth.getSession();
-          supabase.realtime.setAuth(session?.access_token ?? "");
-    
-          if (chRef.current) supabase.removeChannel(chRef.current);
-    
-          const ch = supabase
-            .channel("profile-realtime")
-            .on(
-              "postgres_changes",
-              { event: "*", schema: "public", table: "profile" },
-              async (payload) => {
-                console.log("Profile Change received!", payload);
-    
-                if (payload.eventType !== "UPDATE") return;
-                const newRow = (payload as any).new;
-                const oldRow = (payload as any).old;
-                const isAssigned: boolean | undefined = newRow?.is_assigned;
-                const consultId: string | undefined = newRow?.consult_id;
-                const isConnecting: boolean | undefined = newRow?.is_connecting;
-
-                setStatus(isAssigned);
-                if (oldRow.is_assigned !== newRow.is_assigned && newRow.is_assigned === true) {
-                  console.log("Start timer");
-                  setIsAssigned(true);
-
-                }
-    
-                // BOTH SIDES: when status is "connecting" and room exists, join (once)
-                if (Boolean(isConnecting)) {
-                  console.log("Is Connecting is true, ");
-                  await joinConsult(consultId);
-                  
-                  const {error:err} = await supabase.from("profile")
-                  .update({is_connecting: false,
-                    is_assigned: false,
-                    consult_id: null,
-                    room: null,
-                  })
-                  .eq("id", session.user.id);
-
-                  if(err){
-                    console.error("User failed to reset is_connecting");
-                  }
-                }
-              }
-            );
-    
-          ch.subscribe((s) => console.log("[consult-realtime] status:", s));
-          chRef.current = ch;
-        };
-    
-        // first subscribe after token set
-        subscribeWithCurrentToken();
-    
-        // resubscribe on auth change
-        const { data } = supabase.auth.onAuthStateChange((_evt, newSession) => {
-          supabase.realtime.setAuth(newSession?.access_token ?? "");
-          if (!cancelled) subscribeWithCurrentToken();
-        });
-        authSubRef.current = data.subscription;
-    
-        return () => {
-          cancelled = true;
-          if (chRef.current) supabase.removeChannel(chRef.current);
-          authSubRef.current?.unsubscribe();
-        };
-  }, []);
-
-  useEffect(() => {
-  if (!isAssigned) return;
-
-  setTimerActive(true);
-  setTimeLeft(60);
-
-  const interval = setInterval(() => {
-    setTimeLeft(prev => {
-      if (prev <= 1) {
-        clearInterval(interval);
-        handleTimeoutReset();
-        return 0;
-      }
-      return prev - 1;
-    });
-  }, 1000);
-
-  return () => clearInterval(interval);
-}, [isAssigned]);
-
-async function handleTimeoutReset() {
-  console.log("⏰ Timer expired, resetting consult…");
-
-  // 1. Kill the timer
-  setTimerActive(false);
-  setTimeLeft(60);
-
-  // 2. Show a toast
-  toast.error("Patient was unable to join the consult in time.");
-
-  // 3. Reset DB state
-  const { data: { session } } = await supabase.auth.getSession();
-  if (session?.user?.id) {
-    const { error } = await supabase
-      .from("profile")
-      .update({
-        is_assigned: false,
-        consult_id: null,
-        room: null,
-        status: "ended",
-        ended_at: new Date().toISOString(),
-      })
-      .eq("id", session.user.id);
-
-    if (error) {
-      console.error("❌ Failed to reset consult:", error.message);
-      toast.error("Reset failed, please try again.");
-    } else {
-      console.log("✅ Consult reset successfully");
-    }
-  }
-}
-
-  return (
-    <div>
-      <h3>Consult Status Watcher</h3>
-      {error && <p style={{ color: "red" }}>Error: {error}</p>}
-      <pre>{status ? JSON.stringify(status, null, 2) : "No updates yet"}</pre>
-    </div>
-  );
-}
-
-
-// Shared helper (same endpoint both sides use)
-async function joinConsult(consultId: string) {
-
-   return window.location.assign(
-  `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/doctor/call?consult_id=${consultId}`
-);
-
- 
-}
 
 
