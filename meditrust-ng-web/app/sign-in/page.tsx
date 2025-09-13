@@ -5,6 +5,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
 import { getSession } from "@/lib/sessionCache";
 
+
 export default function SignInPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -13,9 +14,55 @@ export default function SignInPage() {
   const [errorModal, setErrorModal] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [success, setSuccess] = useState(false);
+   const [checking, setChecking] = useState(true); 
+   const [session, setSession] = useState(null);
+   const [showPassword, setShowPassword] = useState(false);
 
   const router = useRouter();
   const isLoading = signInLoading || signUpLoading;
+
+   useEffect(() => {
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      async (_event, session) => {
+        setSession(session ?? null);
+        setChecking(false);
+      }
+    );
+
+    // also check immediately on mount
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session ?? null);
+      setChecking(false);
+    });
+
+    return () => listener.subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (!success || checking) return;     // ⬅️ wait until Supabase is ready
+    if (!session) {
+      router.replace("/sign-in");
+      return;
+    }
+
+    (async () => {
+      const { data: profile } = await supabase
+        .from("profile")
+        .select("*")
+        .eq("id", session.user.id)
+        .maybeSingle();
+
+      if (!profile) {
+        router.replace("/profile");
+      } else if (profile.role === "doctor") {
+        router.replace("/dashboard/doctor");
+      } else if (profile.role === "patient") {
+        router.replace("/dashboard/patient");
+      } else {
+        router.replace("/profile");
+      }
+    })();
+  }, [checking, session]);
 
   // ---- SIGN IN ----
   const handleSignIn = async () => {
@@ -52,27 +99,28 @@ export default function SignInPage() {
 
     console.log("Session check:", data.session, "Error:", error);
 
+    
 
-    setTimeout(async () => {
-      const { data: profile } = await supabase
-        .from("profile")
-        .select("*")
-        .eq("id", session.user.id)
-        .maybeSingle();
+    // setTimeout(async () => {
+    //   const { data: profile } = await supabase
+    //     .from("profile")
+    //     .select("*")
+    //     .eq("id", session.user.id)
+    //     .maybeSingle();
 
-      if (!profile) {
-        router.replace("/profile");
-      } else if (profile.role === "doctor") {
-        router.replace("/dashboard/doctor");
-      } else if (profile.role === "patient") {
-        router.replace("/dashboard/patient");
-      } else {
-        router.replace("/profile"); // fallback
-      }
+    //   if (!profile) {
+    //     router.replace("/profile");
+    //   } else if (profile.role === "doctor") {
+    //     router.replace("/dashboard/doctor");
+    //   } else if (profile.role === "patient") {
+    //     router.replace("/dashboard/patient");
+    //   } else {
+    //     router.replace("/profile"); // fallback
+    //   }
 
-      setSignInLoading(false);
-      setSuccess(false);
-    }, 2500);
+    //   setSignInLoading(false);
+    //   setSuccess(false);
+    // }, 3500);
   };
   
   // ---- SIGN UP ----
@@ -162,27 +210,53 @@ export default function SignInPage() {
           </div>
         </div>
 
+        
+
         {/* Password Field */}
         <div className="space-y-2">
           <label className="block text-sm font-semibold text-gray-700">
             Password
           </label>
           <div className="relative">
+            {/* Left-side lock icon */}
             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
               <span className="text-gray-400">🔐</span>
             </div>
+
+            {/* Input field */}
             <input
-              type="password"
+              type={showPassword ? "text" : "password"}
               placeholder="Enter your secure password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-2xl border-2 border-gray-200 p-4 pl-12 text-gray-800 
-                         placeholder-gray-400 bg-gray-50 
-                         focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 
-                         focus:bg-white hover:border-gray-300
-                         transition-all duration-200"
+              className="w-full rounded-2xl border-2 border-gray-200 p-4 pl-12 pr-12 text-gray-800 
+                        placeholder-gray-400 bg-gray-50 
+                        focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 
+                        focus:bg-white hover:border-gray-300
+                        transition-all duration-200"
               autoComplete="current-password"
             />
+
+            {/* Right-side toggle button */}
+            <button
+              type="button"
+              onClick={() => setShowPassword((prev) => !prev)}
+              className="absolute inset-y-0 right-0 pr-4 flex items-center text-blue-500 hover:text-blue-700"
+            >
+              {showPassword ? (<svg xmlns="http://www.w3.org/2000/svg" 
+     className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.477 0 8.268 2.943 9.542 7-1.274 4.057-5.065 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+  <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth={2} />
+</svg>
+) : (<svg xmlns="http://www.w3.org/2000/svg" 
+     className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} 
+        d="M3 3l18 18M10.58 10.58A3 3 0 0113.42 13.42M6.7 6.7A9.77 9.77 0 003 12c1.274 4.057 5.065 7 9.542 7 
+           2.045 0 3.93-.613 5.5-1.657M17.3 17.3A9.77 9.77 0 0021 12c-1.274-4.057-5.065-7-9.542-7-1.292 0-2.523.252-3.658.7" />
+</svg>
+)}
+            </button>
           </div>
         </div>
 
@@ -196,15 +270,15 @@ export default function SignInPage() {
         {/* Sign In Button */}
         <button
           onClick={handleSignIn}
-          disabled={isLoading}
+          disabled={checking || signInLoading}
           className="w-full py-4 rounded-2xl bg-gradient-to-r from-blue-600 to-blue-700 
                      hover:from-blue-700 hover:to-blue-800 
                      disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed
                      text-white font-semibold shadow-lg hover:shadow-xl 
-                     transition-all duration-200 transform hover:scale-[1.02] disabled:hover:scale-100
+                     transition-all duration-400 transform hover:scale-[1.02] disabled:hover:scale-100
                      flex items-center justify-center gap-2"
         >
-          {isLoading && signInLoading ? (
+          {signInLoading ? (
             <>
               <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
               Signing In...
@@ -259,7 +333,7 @@ export default function SignInPage() {
 
   {/* Enhanced Loading Overlay */}
   {isLoading && (
-  <div className="fixed inset-0 bg-white/40 backdrop-blur-md flex flex-col items-center justify-center z-50 transition-opacity duration-300">
+  <div className="fixed inset-0 bg-white/40 backdrop-blur-md flex flex-col items-center justify-center z-50 transition-opacity duration-400">
     <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-gray-200 p-10 text-center max-w-md">
       {!success ? (
         <>
