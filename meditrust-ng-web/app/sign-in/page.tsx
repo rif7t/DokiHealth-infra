@@ -52,15 +52,12 @@ export default function SignInPage() {
         .eq("id", session.user.id)
         .maybeSingle();
 
-      if (!profile) {
-        router.replace("/profile");
-      } else if (profile.role === "doctor") {
+      if (profile.role === "doctor") {
         router.replace("/dashboard/doctor");
       } else if (profile.role === "patient") {
         router.replace("/dashboard/patient");
-      } else {
-        router.replace("/profile");
       }
+      
     })();
   }, [checking, session]);
 
@@ -98,29 +95,12 @@ export default function SignInPage() {
     setSuccess(true);
 
     console.log("Session check:", data.session, "Error:", error);
+    if(signInLoading){
+        return <div className="flex items-center justify-center h-screen">Loading...</div>;
 
+    }
     
 
-    // setTimeout(async () => {
-    //   const { data: profile } = await supabase
-    //     .from("profile")
-    //     .select("*")
-    //     .eq("id", session.user.id)
-    //     .maybeSingle();
-
-    //   if (!profile) {
-    //     router.replace("/profile");
-    //   } else if (profile.role === "doctor") {
-    //     router.replace("/dashboard/doctor");
-    //   } else if (profile.role === "patient") {
-    //     router.replace("/dashboard/patient");
-    //   } else {
-    //     router.replace("/profile"); // fallback
-    //   }
-
-    //   setSignInLoading(false);
-    //   setSuccess(false);
-    // }, 3500);
   };
   
   // ---- SIGN UP ----
@@ -130,7 +110,7 @@ export default function SignInPage() {
       setErrorModal(true);
       return;
     }
-
+    localStorage.setItem("justSignedUp", "true");
     setSignUpLoading(true);
 
     const { data, error } = await supabase.auth.signUp({ email, password });
@@ -143,6 +123,7 @@ export default function SignInPage() {
     }
 
     if (data.session) {
+      setSignUpLoading(false);
       // User is logged in immediately (no email confirmation required)
       router.replace("/profile");
     } else {
@@ -150,6 +131,7 @@ export default function SignInPage() {
       setErrorMessage("Check your email to confirm your account.");
       setErrorModal(true);
     }
+    
 
     setSignUpLoading(false);
   };

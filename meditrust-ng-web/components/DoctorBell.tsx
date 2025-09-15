@@ -1,13 +1,45 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { motion, AnimatePresence } from "framer-motion";
 import { publish } from "@/lib/eventBus";
 
-export default function DoctorBell() {
+export default function DoctorBell({ pendingConsults, setPendingConsults }) {
   const [open, setOpen] = useState(false);
   const [userid, setUserid] = useState("");
-  const [pendingConsults, setPendingConsults] = useState<any[]>([]);
+  
+
+  const popupRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent | TouchEvent) {
+      if (popupRef.current && !popupRef.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setOpen(false);
+      }
+    }
+
+    if (open) {
+      document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener("touchstart", handleClickOutside);
+      document.addEventListener("keydown", handleKeyDown);
+      fetchConsults();
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+
+    
+  
+  }, [open]);
 
   // fetch pending consults for this doctor
   const fetchConsults = async () => {
@@ -38,6 +70,7 @@ export default function DoctorBell() {
 
 
 
+
     const { data: user } = await supabase.auth.getUser();
     if (!user?.user) return;
     setUserid(user.user.id);
@@ -52,129 +85,151 @@ export default function DoctorBell() {
 
     if (!error && data) setPendingConsults(data);
   };
+  // accept consult
+  const acceptConsult = async (consultId: number) => {
+  try {
+    setOpen(false);
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (!session) return;
 
-  return (
+    const res = await fetch("/api/accept-consult", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      // 👇 convert number → string because your API expects string
+      body: JSON.stringify({ consult_id: String(consultId) }),
+    });
+
+    if (!res.ok) throw new Error(await res.text());
+    const result = await res.json();
+
+    console.log("✅ Consult accepted:", result);
+    alert(`Consult ${consultId} accepted`);
+
+    // remove from pending list
+    setPendingConsults((prev) => prev.filter((c) => c.id !== consultId));
+
+    publish("consult:accepted", consultId);
+  } catch (err) {
+    console.error("Error accepting consult:", err);
+    alert("❌ Failed to accept consult");
+  }
+};
+
+  // reject consult
+  const rejectConsult = async (consultId: number) => {
+  try {
+    setOpen(false);
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (!session) return;
+
+    const res = await fetch("/api/reject-consult", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      // 👇 convert number → string for API
+      body: JSON.stringify({ consult_id: String(consultId) }),
+    });
+
+    if (!res.ok) throw new Error(await res.text());
+    await res.json();
+
+    alert(`❌ Consult ${consultId} rejected`);
+    console.log("❌ Consult rejected:", consultId);
+
+    // Tell patient flow to retry
+    await fetch("/api/verify-consult", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ consult_id: String(consultId) }),
+    });
+
+    // remove from pending list
+    setPendingConsults((prev) => prev.filter((c) => c.id !== consultId));
+
+    publish("consult:rejected", consultId);
+  } catch (err) {
+    console.error("Error rejecting consult:", err);
+    alert("❌ Failed to reject consult");
+  }
+};
+return (
     <div className="relative">
-      {/* Bell Icon */}
+      {/* 🔔 bell button */}
       <button
-        className="relative p-2 rounded-lg bg-blue-50 text-blue-600"
-        onClick={async () => {
-          setOpen(!open);
-          if (!open) {
-            await fetchConsults();
-          }
-        }}
+        onClick={() => setOpen((prev) => !prev)}
+        className="relative text-2xl"
       >
         🔔
         {pendingConsults.length > 0 && (
-          <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-500"></span>
+          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-1.5">
+            {pendingConsults.length}
+          </span>
         )}
       </button>
 
       {/* Popup card */}
-      {open && (
-        <div className="absolute right-8 top-14 w-[30dvh] sm:w-[1rem] max-h-64  sm:right-20 mt-2 w-60 bg-white shadow-lg rounded-lg border p-4 px-8 z-50">
-          <h3 className="font-semibold mb-2 text-gray-900">Pending Consult</h3>
-          {pendingConsults.length === 0 ? (
-            <p className="text-sm text-gray-500">No new consults</p>
-          ) : (
-            <ul className="space-y-2">
-              {pendingConsults.map((c) => (
-                <li
-                  key={c.id}
-                  className="p-2 border rounded-lg bg-gray-50 flex flex-col gap-1"
-                >
-                  <span className="font-medium text-gray-800">
-                    Consult #{c.id}
-                  </span>
-                  <span className="text-xs text-gray-500">{c.symptoms}</span>
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            ref={popupRef}
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            className="absolute right-0 mt-2 w-80 max-h-[70vh] overflow-y-auto bg-white shadow-lg rounded-xl border p-4 z-50"
+          >
+            <h3 className="font-semibold mb-3 text-gray-900">Pending Consult</h3>
 
-                  <div className="flex gap-2 mt-2">
-                    {/* Accept button */}
-                    <button
-                      onClick={async () => {
-                        try {
-                          setOpen(false);
-                          const {
-                            data: { session },
-                          } = await supabase.auth.getSession();
-                          if (!session) return;
+            {pendingConsults.length === 0 ? (
+              <p className="text-sm text-gray-500">No new consults</p>
+            ) : (
+              <ul className="space-y-3">
+                {pendingConsults.map((c) => (
+                  <li
+                    key={c.id}
+                    className="p-3 border rounded-lg bg-gray-50 flex flex-col gap-2"
+                  >
+                    <div className="flex justify-between items-center">
+                      <span className="font-medium text-gray-800">
+                        Consult #{c.id}
+                      </span>
+                      <span className="text-xs text-gray-500">
+                        {c.created_at ? new Date(c.created_at).toLocaleString() : ""}
+                      </span>
+                    </div>
 
-                          const res = await fetch("/api/accept-consult", {
-                            method: "POST",
-                            headers: {
-                              "Content-Type": "application/json",
-                              Authorization: `Bearer ${session.access_token}`,
-                            },
-                            body: JSON.stringify({ consult_id: c.id }),
-                          });
+                    <span className="text-sm text-gray-600">{c.symptoms}</span>
 
-                          if (!res.ok) throw new Error(await res.text());
-                          const result = await res.json();
-
-                          console.log("✅ Consult accepted:", result);
-                          alert(`Consult ${c.id} accepted`);
-
-                          publish("consult:accepted", c.id);
-                        } catch (err) {
-                          console.error("Error accepting consult:", err);
-                          alert("❌ Failed to accept consult");
-                        }
-                      }}
-                      className="flex-1 bg-green-500 text-white rounded px-2 py-1"
-                    >
-                      Accept
-                    </button>
-
-                    {/* Reject button */}
-                    <button
-                      onClick={async () => {
-                        try {
-                          setOpen(false);
-                          const {
-                            data: { session },
-                          } = await supabase.auth.getSession();
-                          if (!session) return;
-
-                          const res = await fetch("/api/reject-consult", {
-                            method: "POST",
-                            headers: {
-                              "Content-Type": "application/json",
-                              Authorization: `Bearer ${session.access_token}`,
-                            },
-                            body: JSON.stringify({ consult_id: c.id }),
-                          });
-
-                          if (!res.ok) throw new Error(await res.text());
-                          await res.json();
-
-                          alert(`❌ Consult ${c.id} rejected`);
-                          console.log("❌ Consult rejected:", c.id);
-
-                          // Tell patient flow to retry
-                          await fetch("/api/verify-consult", {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ consult_id: c.id }),
-                          });
-
-                          publish("consult:rejected", c.id);
-                        } catch (err) {
-                          console.error("Error rejecting consult:", err);
-                          alert("❌ Failed to reject consult");
-                        }
-                      }}
-                      className="flex-1 bg-red-500 text-white rounded px-2 py-1"
-                    >
-                      Reject
-                    </button>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      )}
+                    <div className="flex gap-3 pt-2">
+                      <button
+                        onClick={() => acceptConsult(c.id)}
+                        className="flex-1 bg-green-500 text-white rounded-md px-3 py-1 hover:bg-green-600 transition"
+                      >
+                        Accept
+                      </button>
+                      <button
+                        onClick={() => rejectConsult(c.id)}
+                        className="flex-1 bg-red-500 text-white rounded-md px-3 py-1 hover:bg-red-600 transition"
+                      >
+                        Reject
+                      </button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
