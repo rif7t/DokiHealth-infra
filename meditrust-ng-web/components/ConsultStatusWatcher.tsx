@@ -1,175 +1,3 @@
-// "use client";
-// import { supabase } from "@/lib/supabaseClient";
-// import { useEffect,useRef,  useState } from "react";
-// import { Loader2 } from "lucide-react"; // nice spinner icon
-// import { KeyboardDismissWrapper } from "@/components/KeyboardDismissWrapper";
-// import { Card, CardContent } from "@/components/ui/Card";
-
-
-
-//   type OnReady = (payload: { consultId: string; room: string }) => Promise<void> | void;
-//   type RC = ReturnType<typeof supabase.channel>;
-
-// export function ConsultStatusWatcher() {
-//   const [status, setStatus] = useState<string | null>(null);
-//   const [error, setError] = useState<string | null>(null);
-//   const chRef = useRef<RC | null>(null);
-//   const authSubRef = useRef<{ unsubscribe: () => void } | null>(null);
-
-//   useEffect(() => {
-//     let cancelled = false;
-
-//     const subscribeWithCurrentToken = async () => {
-//       // 1) Ensure socket has the latest token BEFORE we subscribe
-//       const { data: { session } } = await supabase.auth.getSession();
-//       supabase.realtime.setAuth(session?.access_token ?? "");
-
-//       // 2) (Re)create the channel fresh each time
-//       if (chRef.current) supabase.removeChannel(chRef.current);
-//       const ch = supabase
-//         .channel("consult-realtime")
-//         .on(
-//           "postgres_changes",
-//           { event: "*", schema: "public", table: "consult" },
-//           async (payload) => {
-//             console.log("Consult Change received!", payload);
-
-//             if (payload.eventType === "UPDATE") {
-//               const newRow = (payload as any).new;
-//               const newStatus = (payload as any).new?.status;
-//               if (typeof newStatus === "string") setStatus(newStatus);
-
-//               if (newStatus === "accepted") {
-//                 try {
-//                   // your existing flow
-//                   const paymentResult = await initPayment((payload as any).new.id);
-//                   console.log("Payment initialized:", paymentResult);
-
-//                   const authorization_url= paymentResult.authorization_url;
-//                   const reference = paymentResult.reference;
-
-//                    try { localStorage.setItem("paystack_ref", reference); } catch {}
-
-//                   const u = new URL(authorization_url);
-//                   if (/(\.|^)paystack\.com$/i.test(u.hostname)) {
-//                     window.location.assign(u.toString());
-//                   } else {
-//                     console.error("Unexpected checkout host:", u.hostname);
-//                   }
-//                 } catch (err: any) {
-//                   console.error("Payment error:", err);
-//                   setError(err?.message ?? "Payment failed");
-//                 }
-//               }
-//               else if(newStatus === "connecting" && newRow?.twilio_room){
-
-//               }
-//             }
-//           }
-//         );
-
-//       ch.subscribe((s) => console.log("[consult-realtime] status:", s));
-//       chRef.current = ch;
-//     };
-
-//     // first subscribe after we’ve set the token
-//     subscribeWithCurrentToken();
-
-//     // 3) If the session changes later, refresh socket auth AND resubscribe
-//     const { data } = supabase.auth.onAuthStateChange((_evt, newSession) => {
-//       supabase.realtime.setAuth(newSession?.access_token ?? "");
-//       if (!cancelled) subscribeWithCurrentToken();
-//     });
-//     authSubRef.current = data.subscription;
-
-//     return () => {
-//       cancelled = true;
-//       if (chRef.current) supabase.removeChannel(chRef.current);
-//       authSubRef.current?.unsubscribe();
-//     };
-//   }, []);
-
-//   return (
-//     <KeyboardDismissWrapper>
-//     <div className="fixed inset-0 flex items-center justify-center z-50">
-//       <Card className="shadow-2xl rounded-xl border border-blue-200 bg-white w-80">
-//         <CardContent className="flex flex-col items-center justify-center p-6">
-//           <h3 className="text-blue-500 font-semibold mb-4">Consult Status</h3>
-//           <div className="flex flex-col items-center gap-3">
-//             <Loader2 className="animate-spin text-blue-500 w-8 h-8" />
-//             <p className="text-blue-500 text-lg font-bold">
-//               {status ?? "Waiting for updates…"}
-//             </p>
-//           </div>
-//           {error && <p className="text-red-500">{error}</p>}
-//         </CardContent>
-//       </Card>
-//     </div>
-//     </KeyboardDismissWrapper>
-//   );
-// }
-
-// export async function initPayment(consultId: string) {
-//   const { data: { session } } = await supabase.auth.getSession();
-//   const token = session?.access_token;
-//   if (!token) throw new Error("not_authenticated");
-
-//   const res = await fetch("/api/payment-init", {
-//     method: "POST",
-//     headers: {
-//       "content-type": "application/json",
-//       authorization: `Bearer ${token}`,
-//       // optional: trace or dedupe
-//       "x-request-id": crypto.randomUUID?.() ?? `${Date.now()}-${Math.random()}`,
-//     },
-//     body: JSON.stringify({ consult_id: consultId }),
-//     cache: "no-store",
-//   });
-
-//   let body: any = null;
-//   try { body = await res.json(); } catch { /* ignore parse errs */ }
-
-//   if (!res.ok) {
-//     const msg = body?.error ?? res.statusText ?? "payment_init_failed";
-//     throw new Error(msg);
-//   }
-//   return body;
-// }
-
-
-// // export async function initPayment(consultId: string) {
-// //   try {
-// //     console.log("Gets Here");
-// //     const {
-// //         data: { session },
-// //       } = await supabase.auth.getSession();
-    
-// //     console.log("INITPAYMENT: ");
-// //     const response = await fetch("/api/payment-init", {
-    
-// //       method: "POST",
-// //       headers: {
-// //           "Content-Type": "application/json",
-// //           Authorization: `Bearer ${session.access_token}`,
-// //       },
-// //       body: JSON.stringify({ consult_id: consultId }),
-// //     });
-
-// //     if (!response.ok) {
-// //       throw new Error(`Payment init failed: ${response.statusText}`);
-// //     }
-
-// //     const initResponse =  await response.json();
-// //     return initResponse;
-// //     console.log(initResponse);
-// //   } catch (error) {
-// //     console.error("Error initializing payment:", error);
-// //     throw error;
-// //   }
-// // }
-
-
-
 "use client";
 import { supabase } from "@/lib/supabaseClient";
 import { useEffect, useRef, useState } from "react";
@@ -177,6 +5,7 @@ import { Loader2 } from "lucide-react";
 import { KeyboardDismissWrapper } from "@/components/KeyboardDismissWrapper";
 import { Card, CardContent } from "@/components/ui/Card";
 import { connect } from "twilio-video";
+import toast from "react-hot-toast";
 
 type RC = ReturnType<typeof supabase.channel>;
 
@@ -192,6 +21,7 @@ export function ConsultStatusWatcher() {
 
   useEffect(() => {
     let cancelled = false;
+    
 
     const subscribeWithCurrentToken = async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -214,7 +44,11 @@ export function ConsultStatusWatcher() {
             const consultId: string | undefined = newRow?.id;
 
             if (!consultId || !newStatus) return;
-            setStatus(newStatus);
+
+            if (newStatus !== "failed"){
+              setStatus(newStatus);
+            }
+            
 
             // PATIENT: when a consult flips to "accepted", start payment (once)
             if (newStatus === "accepted") {
@@ -227,7 +61,7 @@ export function ConsultStatusWatcher() {
                 if (!launchedPaymentsRef.current.has(consultId)) {
                   launchedPaymentsRef.current.add(consultId);
 
-                  const paymentResult = await initPayment(consultId);
+                  const paymentResult = await initPayment(String(consultId).trim());
                   console.log("Payment initialized:", paymentResult);
 
                   const authorization_url = paymentResult.authorization_url;
@@ -243,10 +77,32 @@ export function ConsultStatusWatcher() {
                   }
                 }
               } catch (err: any) {
+                toast.error(`❌ Consult failed: ${err.message}`);
                 console.error("Payment error:", err);
                 setError(err?.message ?? "Payment failed");
               }
             }
+            
+
+            if (newStatus === "failed") {
+              
+              //toast.error(`Something went wrong while starting your consult. Please try again, or contact support if the issue continues.`);
+              setTimeout(() => {
+              setStatus(
+                "We couldn’t connect you with your assigned doctor. Please request a new consultation."
+              );
+              setError(null);
+              launchedPaymentsRef.current.clear();
+              joinedCallsRef.current.clear();
+
+              // 👇 After 5s, mark as done (card will disappear)
+              setTimeout(() => {
+                setStatus("done");
+              }, 4000);
+            }, 3000);
+              return;
+            }
+
 
             // BOTH SIDES: when status is "connecting" and room exists, join (once)
             if (newStatus === "connecting") {
@@ -277,23 +133,31 @@ export function ConsultStatusWatcher() {
   }, []);
 
   return (
-    <KeyboardDismissWrapper>
-      <div className="fixed inset-0 flex items-center justify-center z-50">
-        <Card className="shadow-2xl rounded-xl border border-blue-200 bg-white w-80">
-          <CardContent className="flex flex-col items-center justify-center p-6">
-            <h3 className="text-blue-500 font-semibold mb-4">Consult Status</h3>
-            <div className="flex flex-col items-center gap-3">
-              <Loader2 className="animate-spin text-blue-500 w-8 h-8" />
-              <p className="text-blue-500 text-lg font-bold">
-                {status ?? "Waiting for updates…"}
-              </p>
-            </div>
-            {error && <p className="text-red-500">{error}</p>}
-          </CardContent>
-        </Card>
-      </div>
-    </KeyboardDismissWrapper>
-  );
+  <KeyboardDismissWrapper>
+    {status && status !== "done" ? (
+  <div className="fixed inset-0 flex items-center justify-center z-50">
+    <Card className="shadow-2xl rounded-xl border border-blue-200 bg-white w-80">
+      <CardContent className="flex flex-col items-center justify-center p-6">
+        <h3 className="text-blue-500 font-semibold mb-3 text-base">
+          Consult Status
+        </h3>
+        <div className="flex flex-col items-center gap-2">
+          <Loader2 className="animate-spin text-blue-500 w-6 h-6" />
+          <p className="text-blue-500 text-sm font-medium text-center">
+            {status ?? "Waiting for updates…"}
+          </p>
+        </div>
+        {error && (
+          <p className="text-red-500 text-xs text-center mt-2">{error}</p>
+        )}
+      </CardContent>
+    </Card>
+  </div>
+) : null}
+
+  </KeyboardDismissWrapper>
+);
+
 }
 
 // --- Helpers --- //
@@ -315,7 +179,7 @@ export async function initPayment(consultId: string) {
       authorization: `Bearer ${token}`,
       "x-request-id": crypto.randomUUID?.() ?? `${Date.now()}-${Math.random()}`,
     },
-    body: JSON.stringify({ consult_id: consultId }),
+    body: JSON.stringify({ consult_id: consultId, action:"init" }),
     cache: "no-store",
   });
 

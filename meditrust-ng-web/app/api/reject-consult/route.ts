@@ -28,10 +28,15 @@ export async function POST(req: NextRequest) {
     }
   );
       
-      if (!res.ok) throw new Error(await res.json());
-      const text = await res.json();
-      console.log("CONSULT ASSIGN: ", text);
-      return  NextResponse.json(text);
+      if (!res.ok) {
+  const errBody = await res.json().catch(() => ({}));
+  throw new Error(errBody.error ?? JSON.stringify(errBody));
+}
+
+const text = await res.json();
+console.log("CONSULT ASSIGN: ", text);
+return NextResponse.json(text);
+
   } catch (err: any) {
     console.error("Consult Request Error:", err);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
