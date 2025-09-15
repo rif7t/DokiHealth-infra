@@ -1,10 +1,13 @@
 "use client";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
+import { useSession } from "@/components/SessionProvider";
 import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { startConsult } from "@/lib/onStartConsult";
 import { ConsultStatusWatcher } from "@/components/ConsultStatusWatcher"; // make sure you export it
 import { KeyboardDismissWrapper } from "@/components/KeyboardDismissWrapper";
+import MedicalHistoryForms from "./profile/MedicalHistoryForms";
 
 export default function PatientDashboard() {
   const router = useRouter();
@@ -17,6 +20,19 @@ export default function PatientDashboard() {
   const [symptom, setSymptom] = useState("");
   const [greeting, setGreeting] = useState("Hello");
   const [showWatcher, setShowWatcher] = useState(false);
+  const [isNewUser, setIsNewUser] = useState(false);
+   const searchParams = useSearchParams();
+
+
+   useEffect(() => {
+    if (searchParams.get("new") === "1") {
+      setIsNewUser(true);
+      // Optional: remove the param so it doesn’t stick on reload
+      const url = new URL(window.location.href);
+      url.searchParams.delete("new");
+      window.history.replaceState({}, "", url.toString());
+    }
+  }, [searchParams]);
 
   useEffect(() => {
       const updateGreeting = () => {
@@ -29,6 +45,7 @@ export default function PatientDashboard() {
           setGreeting("Good evening");
         }
       };
+      
 
       updateGreeting(); // set immediately on load
       const interval = setInterval(updateGreeting, 60 * 1000); // update every minute
@@ -103,17 +120,19 @@ export default function PatientDashboard() {
       const {
         data: { session },
       } = await supabase.auth.getSession();
-      // if (!session) {
-      //   router.replace("/sign-in");
-      //   return;
-      // }
-
+      if (!session) {
+        router.replace("/sign-in");
+        return;
+      }
+      
       // Fetch profile
       const res = await fetch("/api/profile", {
         headers: { Authorization: `Bearer ${session.access_token}` },
       });
       const data = await res.json();
       if (data?.profile) setProfile(data.profile);
+       setLoading(false);
+       
 
       // Fetch consultations
      const { data: consults, error } = await supabase
@@ -153,13 +172,47 @@ export default function PatientDashboard() {
       },
       body: JSON.stringify({ profile, isDoctor: false }),
     });
-    alert("✅ Profile updated");
-
-
-    
+    alert("✅ Profile updated");    
     };
 
+  if (profile === null && isNewUser === false) {
+  // ⏳ Still fetching profile, don’t render dashboard or forms yet
+  return (
+    <div className="flex items-center justify-center h-screen">
+      <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-blue-500"></div>
+      <span className="ml-3 text-gray-600">Loading profile...</span>
+    </div>
+  );
+}
+
+if (profile === null && isNewUser === true) {
+  // ⏳ Still fetching profile, don’t render dashboard or forms yet
+  setIsNewUser(false);
+  return (
     
+    <div className="flex items-center justify-center h-screen">
+      <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-blue-500"></div>
+      <span className="ml-3 text-gray-600">Almost there, let’s complete your medical profile...</span>
+    </div>
+  );
+}
+
+
+  // If no profile or missing key fields, force MedicalHistoryForms
+  if (!profile || !profile.date_of_birth) {
+    const flag = localStorage.getItem("justSignedUp");
+    if (flag === "true") {
+      setIsNewUser(true);
+      localStorage.removeItem("justSignedUp"); // clean up after first load
+    }
+  console.log("We're onboarding");
+  return (
+    <MedicalHistoryForms
+      onComplete={(updatedProfile) => setProfile(updatedProfile)}
+    />
+  );
+}
+ 
 
     return (
     <KeyboardDismissWrapper>
@@ -219,7 +272,7 @@ export default function PatientDashboard() {
           <label className="text-sm font-medium text-gray-700">Describe Your Symptoms</label>
           <div className="relative">
             <textarea
-              placeholder="Please describe your symptoms in detail. Include when they started, severity, and any factors that make them better or worse..."
+              placeholder="Please briefly describe your symptoms. Include when they started, severity, and any factors that make them better or worse..."
               value={symptom}
               onChange={(e) => setSymptom(e.target.value)}
               className="w-full border border-gray-200 rounded-xl p-3 
@@ -229,7 +282,7 @@ export default function PatientDashboard() {
               rows={4}
             />
           </div>
-          <p className="text-xs text-gray-500">Be as detailed as possible to help doctors understand your condition</p>
+          <p className="text-xs text-gray-500">Briefly describe your main concern (you’ll explain more to the doctor during the call)</p>
         </div>
 
     <div className="space-y-1">
@@ -261,7 +314,7 @@ export default function PatientDashboard() {
       <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Consultation Preferences</h3>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="space-y-1">
+        {/* <div className="space-y-1">
           <label className="text-sm font-medium text-gray-700">Consultation Type</label>
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -279,9 +332,9 @@ export default function PatientDashboard() {
               <span className="text-gray-400">▼</span>
             </div>
           </div>
-        </div>
+        </div> */}
 
-      <div className="space-y-1">
+       <div className="space-y-1">
         <label className="text-sm font-medium text-gray-700">Urgency Level</label>
         <div className="relative">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -584,28 +637,77 @@ export default function PatientDashboard() {
     </div>
 
     {/* Medical Information Section */}
-    <div className="space-y-4">
-      <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">Medical Information</h3>
-      
-      <div className="space-y-1">
-        <label className="text-sm font-medium text-gray-700">Medical History</label>
-        <div className="relative">
-          <textarea
-            className="w-full border border-gray-200 rounded-xl p-3 
-                       focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
-                       hover:border-gray-300 transition-colors duration-200
-                       bg-gray-50 focus:bg-white text-gray-800 resize-none"
-            placeholder="Share any relevant medical history, allergies, or current medications..."
-            rows={4}
-            defaultValue=""
-          />
-        </div>
-        <p className="text-xs text-amber-600 flex items-center gap-1">
-          <span>⚠️</span>
-          This information is not yet saved automatically
-        </p>
+<div className="space-y-4">
+  <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
+    Medical Information
+  </h3>
+
+  <div className="space-y-3 bg-gray-50 p-4 rounded-xl border border-gray-200 w-full">
+    {/* Blood Type */}
+    {profile?.blood_type && (
+      <div className="flex flex-col sm:flex-row sm:gap-2">
+        <span className="text-blue-500 font-medium">Blood Type:</span>
+        <span className="text-gray-800 break-words">{profile.blood_type}</span>
       </div>
-    </div>
+    )}
+
+    {/* Chronic Conditions */}
+    {profile?.chronic_conditions?.length > 0 && (
+      <div className="flex flex-col sm:flex-row sm:gap-2">
+        <span className="text-blue-500 font-medium">Chronic Conditions:</span>
+        <span className="text-gray-800 break-words">
+          {profile.chronic_conditions.join(", ")}
+        </span>
+      </div>
+    )}
+
+    {/* Previous Surgeries */}
+    {profile?.previous_surgeries && (
+      <div className="flex flex-col sm:flex-row sm:gap-2">
+        <span className="text-blue-500 font-medium">Surgeries:</span>
+        <span className="text-gray-800 break-words">{profile.previous_surgeries}</span>
+      </div>
+    )}
+
+    {/* Family History */}
+    {profile?.family_history && (
+      <div className="flex flex-col sm:flex-row sm:gap-2">
+        <span className="text-blue-500 font-medium">Family History:</span>
+        <span className="text-gray-800 break-words">{profile.family_history}</span>
+      </div>
+    )}
+
+    {/* Allergies */}
+    {profile?.drug_allergies && (
+      <div className="flex flex-col sm:flex-row sm:gap-2">
+        <span className="text-blue-500 font-medium">Drug Allergies:</span>
+        <span className="text-gray-800 break-words">{profile.drug_allergies}</span>
+      </div>
+    )}
+    {profile?.food_allergies && (
+      <div className="flex flex-col sm:flex-row sm:gap-2">
+        <span className="text-blue-500 font-medium">Food Allergies:</span>
+        <span className="text-gray-800 break-words">{profile.food_allergies}</span>
+      </div>
+    )}
+    {profile?.environmental_allergies && (
+      <div className="flex flex-col sm:flex-row sm:gap-2">
+        <span className="text-blue-500 font-medium">Environmental Allergies:</span>
+        <span className="text-gray-800 break-words">{profile.environmental_allergies}</span>
+      </div>
+    )}
+
+    {/* Prescriptions */}
+    {profile?.prescriptions && (
+      <div className="flex flex-col sm:flex-row sm:gap-2">
+        <span className="text-blue-500 font-medium">Current Prescriptions:</span>
+        <span className="text-gray-800 break-words">{profile.prescriptions}</span>
+      </div>
+    )}
+  </div>
+</div>
+
+
 
     {/* Save Button */}
     <div className="pt-4 border-t border-gray-100">

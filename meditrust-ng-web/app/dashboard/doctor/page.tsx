@@ -7,7 +7,9 @@ import DoctorBell from "@/components/DoctorBell";
 import { subscribe } from "@/lib/eventBus";
 import { useRef } from "react";
 import { KeyboardDismissWrapper } from "@/components/KeyboardDismissWrapper";
-import { connect } from "twilio-video";
+import DoctorRegistrationForms from "./profile/DoctorRegistrationForms";
+
+
 import toast from "react-hot-toast";
 
 export default function DoctorDashboard() {
@@ -27,19 +29,34 @@ export default function DoctorDashboard() {
   const [session, setSession] = useState<any | null>(null);
   const [loadingSession, setLoadingSession] = useState(true);
   const [cstatus, setCstatus] = useState<any | null>(null);
+  const [pendingConsults, setPendingConsults] = useState<any[]>([]);
   const router = useRouter();
   const audioRef = useRef<HTMLAudioElement | null>(null);      
+
+  
+  useEffect(() => {
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data } = await supabase
+        .from("profile")
+        .select("*")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      setProfile(data);
+      setLoading(false);
+    })();
+  }, []);
 
   
 
   // 🔔 Subscription to new consults
   useEffect(() => {
+    if(!profile) return;
     const unsubscribe = subscribe("new-consult", () => {
       setShowToast(true);
-      if (!audioRef.current) {
-          audioRef.current = new Audio("/notifications/consult-notif.mp3");
-        }
-        audioRef.current.play();
       setTimeout(() => setShowToast(false), 2000);
     });
     return () => unsubscribe();
@@ -199,7 +216,9 @@ export default function DoctorDashboard() {
   };
   type RC = ReturnType<typeof supabase.channel>;
 
-function ConsultStatusWatcher() {
+  
+
+  function ConsultStatusWatcher() {
   const [status, setStatus] = useState<any | null>(null);
   const [error, setError] = useState<string | null>(null);
   const chRef = useRef<RC | null>(null);
@@ -239,6 +258,14 @@ function ConsultStatusWatcher() {
                   console.log("Start timer");
                   setIsAssigned(true);
 
+                  setShowToast(true);
+                if (!audioRef.current) {
+                  audioRef.current = new Audio("/notifications/consult-notif.mp3");
+                }
+                audioRef.current.play();
+
+                setPendingConsults((prev) => [...prev, newRow]);
+                setTimeout(() => setShowToast(false), 2000);
                 }
     
                 // BOTH SIDES: when status is "connecting" and room exists, join (once)
@@ -300,7 +327,9 @@ function ConsultStatusWatcher() {
   }, 1000);
 
   return () => clearInterval(interval);
-}, [isAssigned]);
+ }, [isAssigned]);
+
+
 
 async function handleTimeoutReset() {
   console.log("⏰ Timer expired, resetting consult…");
@@ -355,7 +384,24 @@ async function joinConsult(consultId: string) {
  
 }
 
+
+
   ConsultStatusWatcher();
+
+   if (profile === null) {
+  // ⏳ Still fetching profile, don’t render dashboard or forms yet
+  return (
+    <div className="flex items-center justify-center h-screen">
+      <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-blue-500"></div>
+      <span className="ml-3 text-gray-600">Loading profile...</span>
+    </div>
+  );
+}
+   const needsOnboarding = !profile?.medical_license || !profile?.first_name;
+
+  if (needsOnboarding) {
+    return <DoctorRegistrationForms onSuccess={(updatedProfile) => setProfile(updatedProfile)}/>;
+  }
 
 
   return (
@@ -400,7 +446,8 @@ async function joinConsult(consultId: string) {
         </div>
       </div>
       <div className="flex items-center justify-end  gap-3">
-            <DoctorBell />
+            <DoctorBell pendingConsults={pendingConsults}
+        setPendingConsults={setPendingConsults} />
             
           </div>
     </div>
