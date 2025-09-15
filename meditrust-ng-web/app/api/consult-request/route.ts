@@ -47,6 +47,7 @@ export async function POST(req: NextRequest) {
     let specialty = consult_info.specialty;
     return NextResponse.json({consult_id, specialty,});
   } catch (err: any) {
+    
     console.error("Consult Request Error:", err);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
