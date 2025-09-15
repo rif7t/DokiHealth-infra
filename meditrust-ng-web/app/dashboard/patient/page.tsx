@@ -1,5 +1,6 @@
 "use client";
-import { useEffect, useState } from "react";
+
+import { Suspense, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useSession } from "@/components/SessionProvider";
 import { useRouter } from "next/navigation";
@@ -8,6 +9,7 @@ import { startConsult } from "@/lib/onStartConsult";
 import { ConsultStatusWatcher } from "@/components/ConsultStatusWatcher"; // make sure you export it
 import { KeyboardDismissWrapper } from "@/components/KeyboardDismissWrapper";
 import MedicalHistoryForms from "./profile/MedicalHistoryForms";
+import PatientDashboardSearchParams from "./PatientDashboardSearchParams";
 
 export default function PatientDashboard() {
   const router = useRouter();
@@ -21,18 +23,18 @@ export default function PatientDashboard() {
   const [greeting, setGreeting] = useState("Hello");
   const [showWatcher, setShowWatcher] = useState(false);
   const [isNewUser, setIsNewUser] = useState(false);
-   const searchParams = useSearchParams();
+   //const searchParams = useSearchParams();
 
 
-   useEffect(() => {
-    if (searchParams.get("new") === "1") {
-      setIsNewUser(true);
-      // Optional: remove the param so it doesn’t stick on reload
-      const url = new URL(window.location.href);
-      url.searchParams.delete("new");
-      window.history.replaceState({}, "", url.toString());
-    }
-  }, [searchParams]);
+  //  useEffect(() => {
+  //   if (searchParams.get("new") === "1") {
+  //     setIsNewUser(true);
+  //     // Optional: remove the param so it doesn’t stick on reload
+  //     const url = new URL(window.location.href);
+  //     url.searchParams.delete("new");
+  //     window.history.replaceState({}, "", url.toString());
+  //   }
+  // }, [searchParams]);
 
   useEffect(() => {
       const updateGreeting = () => {
@@ -216,6 +218,10 @@ if (profile === null && isNewUser === true) {
 
     return (
     <KeyboardDismissWrapper>
+       {/* 👇 Suspense wrapper for search params */}
+      <Suspense fallback={null}>
+        <PatientDashboardSearchParams onNewUser={setIsNewUser} />
+      </Suspense>
     <div className="min-h-dvh bg-gradient-to-br from-white to-slate-100">
       {/* Header */}
       <div className="sticky top-0 z-20 bg-white/80 backdrop-blur shadow-md rounded-b-2xl p-4">
