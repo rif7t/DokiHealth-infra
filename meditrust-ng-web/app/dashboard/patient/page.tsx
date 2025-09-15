@@ -272,7 +272,7 @@ if (profile === null && isNewUser === true) {
           <label className="text-sm font-medium text-gray-700">Describe Your Symptoms</label>
           <div className="relative">
             <textarea
-              placeholder="Please describe your symptoms in detail. Include when they started, severity, and any factors that make them better or worse..."
+              placeholder="Please briefly describe your symptoms. Include when they started, severity, and any factors that make them better or worse..."
               value={symptom}
               onChange={(e) => setSymptom(e.target.value)}
               className="w-full border border-gray-200 rounded-xl p-3 
@@ -282,7 +282,7 @@ if (profile === null && isNewUser === true) {
               rows={4}
             />
           </div>
-          <p className="text-xs text-gray-500">Be as detailed as possible to help doctors understand your condition</p>
+          <p className="text-xs text-gray-500">Briefly describe your main concern (you’ll explain more to the doctor during the call)</p>
         </div>
 
     <div className="space-y-1">

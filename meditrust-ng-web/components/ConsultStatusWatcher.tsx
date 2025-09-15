@@ -44,7 +44,11 @@ export function ConsultStatusWatcher() {
             const consultId: string | undefined = newRow?.id;
 
             if (!consultId || !newStatus) return;
-            setStatus(newStatus);
+
+            if (newStatus !== "failed"){
+              setStatus(newStatus);
+            }
+            
 
             // PATIENT: when a consult flips to "accepted", start payment (once)
             if (newStatus === "accepted") {
@@ -78,11 +82,24 @@ export function ConsultStatusWatcher() {
                 setError(err?.message ?? "Payment failed");
               }
             }
+            
 
-            if (newStatus === "rejected" || newStatus === "failed") {
-              toast.error(`Something went wrong while starting your consult. Please try again, or contact support if the issue continues.`);
-              setStatus("failed");
+            if (newStatus === "failed") {
+              
+              //toast.error(`Something went wrong while starting your consult. Please try again, or contact support if the issue continues.`);
+              setTimeout(() => {
+              setStatus(
+                "We couldn’t connect you with your assigned doctor. Please request a new consultation."
+              );
               setError(null);
+              launchedPaymentsRef.current.clear();
+              joinedCallsRef.current.clear();
+
+              // 👇 After 5s, mark as done (card will disappear)
+              setTimeout(() => {
+                setStatus("done");
+              }, 4000);
+            }, 3000);
               return;
             }
 
@@ -117,22 +134,27 @@ export function ConsultStatusWatcher() {
 
   return (
   <KeyboardDismissWrapper>
-    { status !== "failed" ? (
-      <div className="fixed inset-0 flex items-center justify-center z-50">
-        <Card className="shadow-2xl rounded-xl border border-blue-200 bg-white w-80">
-          <CardContent className="flex flex-col items-center justify-center p-6">
-            <h3 className="text-blue-500 font-semibold mb-4">Consult Status</h3>
-            <div className="flex flex-col items-center gap-3">
-              <Loader2 className="animate-spin text-blue-500 w-8 h-8" />
-              <p className="text-blue-500 text-lg font-bold">
-                {status ?? "Waiting for updates…"}
-              </p>
-            </div>
-            {error && <p className="text-red-500">{error}</p>}
-          </CardContent>
-        </Card>
-      </div>
-    ) : null}
+    {status && status !== "done" ? (
+  <div className="fixed inset-0 flex items-center justify-center z-50">
+    <Card className="shadow-2xl rounded-xl border border-blue-200 bg-white w-80">
+      <CardContent className="flex flex-col items-center justify-center p-6">
+        <h3 className="text-blue-500 font-semibold mb-3 text-base">
+          Consult Status
+        </h3>
+        <div className="flex flex-col items-center gap-2">
+          <Loader2 className="animate-spin text-blue-500 w-6 h-6" />
+          <p className="text-blue-500 text-sm font-medium text-center">
+            {status ?? "Waiting for updates…"}
+          </p>
+        </div>
+        {error && (
+          <p className="text-red-500 text-xs text-center mt-2">{error}</p>
+        )}
+      </CardContent>
+    </Card>
+  </div>
+) : null}
+
   </KeyboardDismissWrapper>
 );
 
