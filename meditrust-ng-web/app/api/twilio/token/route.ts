@@ -36,6 +36,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    
+
     // Safe: mint Twilio token
     const videoGrant = new jwt.AccessToken.VideoGrant({ room: `consult_${consult_id}` });
     const accessToken = new jwt.AccessToken(
@@ -45,9 +47,15 @@ export async function POST(req: Request) {
       { identity: user.id }
     );
     accessToken.addGrant(videoGrant);
+    if(consult.patient_id === user.id){
+      accessToken.identity = `patient_${user.id}`;
+    }
+    if(consult.doctor_id === user.id){
+      accessToken.identity = `doctor_${user.id}`;
+    }
 
     console.log("Access Token: ", accessToken.toJwt());
-
+  
     return NextResponse.json({
       token: accessToken.toJwt(),
       room: `consult_${consult_id}`,
