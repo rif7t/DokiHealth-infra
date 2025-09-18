@@ -374,14 +374,16 @@ console.log("✅ Patient profile loaded:", patientData);
       return;
     }
 
-    const { error } = await supabase
+    const {data, error } = await supabase
       .from("consult")
       .update({
         doctor_notes: finalNotesString,
         diagnosis: notesData.diagnosis || null,
       })
-      .eq("id", consultId);
+      .eq("id", consultId)
+      .select();
 
+      console.log("My consult diagnosis",{ data, error });
     if (error) {
       console.error("Error saving notes:", error);
       alert("Failed to save notes");
