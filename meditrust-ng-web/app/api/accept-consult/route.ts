@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
       
       if (!res.ok) throw new Error(await res.json());
       const text = await res.json();
-      console.log("CONSULT ASSIGN: ", text);
+      //console.log("CONSULT ASSIGN: ", text);
       return  NextResponse.json(text);
   } catch (err: any) {
     console.error("Consult Request Error:", err);

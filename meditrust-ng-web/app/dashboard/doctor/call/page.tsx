@@ -83,11 +83,12 @@ function formatTime(s: number) {
 
 function DoctorCallInner() {
   const sp = useSearchParams();
-  const consultId = sp.get("consult_id") ?? "";
+  const rawConsultId = sp.get("consult_id") ?? "";
+  const consultId = rawConsultId && rawConsultId !== "null" ? rawConsultId : null;
   const router = useRouter();
 
   const [err, setErr] = useState<string | null>(null);
-  const [isVideoOn, setIsVideoOn] = useState(true);
+  const [isVideoOn, setIsVideoOn] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [callDuration, setCallDuration] = useState(0);
 
@@ -199,6 +200,18 @@ console.log("✅ Patient profile loaded:", patientData);
         if (!session) throw new Error("not_authenticated");
         userIdRef.current = session.user.id;
 
+         // who am I?
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    // fetch consult (RLS should protect)
+    const { data: consult, error } = await supabase
+      .from("consult")
+      .select("id, status, doctor_id, patient_id")
+      .eq("id", consultId)
+      .maybeSingle();
+
+    if (error || !consult) return; // show “not found”
         const resp = await fetch("/api/twilio/token", {
           method: "POST",
           headers: {
@@ -449,8 +462,8 @@ console.log("✅ Patient profile loaded:", patientData);
           {/* Remote video */}
           <div
             ref={remoteRef}
-            className="w-full h-full relative overflow-hidden bg-black"
-          >
+                  className="w-full h-full bg-gray-800 flex items-center justify-center rounded-t-2xl overflow-hidden"
+                      >
             {/* Optional placeholder */}
             {/* <div className="text-center text-white">
               <div className="w-32 h-32 bg-blue-600 rounded-full flex items-center justify-center mb-4 mx-auto">
