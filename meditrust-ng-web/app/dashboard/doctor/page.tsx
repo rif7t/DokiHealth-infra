@@ -1,11 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
 import DoctorBell from "@/components/DoctorBell";
 import { subscribe } from "@/lib/eventBus";
-import { useRef } from "react";
 import { KeyboardDismissWrapper } from "@/components/KeyboardDismissWrapper";
 import DoctorRegistrationForms from "./profile/DoctorRegistrationForms";
 
@@ -13,14 +12,27 @@ import DoctorRegistrationForms from "./profile/DoctorRegistrationForms";
 import toast from "react-hot-toast";
 
 export default function DoctorDashboard() {
+
+  type HistoryItem = {
+  id: string;          // consult id (PK in your consult table)
+  created_at: string;  // timestamp when the consult was created
+  patient_id: string;  // FK pointing to profile.id
+  diagnosis: string;   // doctor's diagnosis for this consult
+  symptoms: string;    // symptoms provided by the patient
+  doctor_notes: string; // any notes the doctor saved
+};
   const [tab, setTab] = useState("overview");
   const [status, setStatus] = useState("Nil");
   const [availability, setAvailability] = useState(true);
   const [consultations, setConsultations] = useState<any[]>([]);
-  const [history, setHistory] = useState<any[]>([]);
+  //const [history, setHistory] = useState<any[]>([]);
   const [payouts, setPayouts] = useState<any[]>([]);
   const [profile, setProfile] = useState<any>(null);
   const [greeting, setGreeting] = useState("Hello");
+  const [banks, setBanks] = useState<{ name: string; code: string }[]>([]);
+  const [loadingBanks, setLoadingBanks] = useState(true);
+  const [accountName, setAccountName] = useState<string | null>(null);
+  
 
   const [doctorId, setDoctorId] = useState<string | null>(null);
   const [consult, setConsult] = useState<any | null>(null);
@@ -31,9 +43,88 @@ export default function DoctorDashboard() {
   const [cstatus, setCstatus] = useState<any | null>(null);
   const [pendingConsults, setPendingConsults] = useState<any[]>([]);
   const router = useRouter();
-  const audioRef = useRef<HTMLAudioElement | null>(null);      
+  const audioRef = useRef<HTMLAudioElement | null>(null); 
+  const [history, setHistory] = useState<HistoryItem[]>([]);
+  const historyRef = useRef<HistoryItem[]>([]);
 
-  
+
+  const updateHistory = (newItems: HistoryItem[]) => {
+    historyRef.current = newItems; // instant update
+    setHistory(newItems);          // triggers React render
+  };
+
+ useEffect(() => {
+    async function fetchHistory() {
+      const { data: userData, error: userError } = await supabase.auth.getUser();
+      if (userError || !userData?.user) {
+        console.error("Error getting user:", userError);
+        return;
+      }
+      const doctorId = userData.user.id;
+
+      const { data, error } = await supabase
+        .from("consult")
+        .select("id, created_at, diagnosis, symptoms, doctor_notes, patient_id")
+        .eq("doctor_id", doctorId)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Error loading history:", error);
+        return;
+      }
+
+      const mapped: HistoryItem[] = (data || []).map((row: any) => ({
+        id: row.id,
+        created_at: row.created_at,
+        patient_id: row.patient_id,
+        diagnosis: row.diagnosis,
+        symptoms: row.symptoms,
+        doctor_notes: row.doctor_notes,
+      }));
+
+      console.log("Mapped consults:", mapped);
+      updateHistory(mapped);
+    }
+
+    fetchHistory();
+  }, []);
+
+  // log whenever state updates
+  useEffect(() => {
+    console.log("History state updated:", history);
+  }, [history]);
+
+  // access ref any time (latest value, instantly updated)
+  const logRefNow = () => {
+    console.log("HistoryRef (instant):", historyRef.current);
+  };
+
+
+
+
+
+  useEffect(() => {
+  (async () => {
+    try {
+      const res = await fetch("/api/banks");
+      const data = await res.json();
+
+      if (res.ok) {
+        let bankList = data.banks;
+
+        // Inject Test Bank if in test mode
+        if (process.env.NEXT_PUBLIC_PAYSTACK_MODE === "test") {
+          bankList = [{ name: " Test Bank (Sandbox)", code: "001" }, ...bankList];
+        }
+
+        setBanks(bankList);
+      }
+    } finally {
+      setLoadingBanks(false);
+    }
+  })();
+}, [])
+
   useEffect(() => {
     (async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -122,13 +213,13 @@ export default function DoctorDashboard() {
         .gte("created_at", new Date().toISOString().split("T")[0]);
       setConsultations(consults || []);
 
-      const { data: historyData } = await supabase
-        .from("consult")
-        .select("*")
-        .eq("doctor_id", data.profile.id)
-        .eq("status", "completed")
-        .order("created_at", { ascending: false });
-      setHistory(historyData || []);
+      // const { data: historyData } = await supabase
+      //   .from("consult")
+      //   .select("*")
+      //   .eq("doctor_id", data.profile.id)
+      //   .eq("status", "completed")
+      //   .order("created_at", { ascending: false });
+      // setHistory(historyData || []);
 
       const { data: payoutData } = await supabase
         .from("payouts")
@@ -242,7 +333,7 @@ export default function DoctorDashboard() {
             .channel("profile-realtime")
             .on(
               "postgres_changes",
-              { event: "*", schema: "public", table: "profile" },
+              { event: "*", schema: "public", table: "profile",filter: "is_assigned=eq.true" },
               async (payload) => {
                 console.log("Profile Change received!", payload);
     
@@ -255,7 +346,7 @@ export default function DoctorDashboard() {
 
                 setStatus(isAssigned);
                 if (oldRow.is_assigned !== newRow.is_assigned && newRow.is_assigned === true) {
-                  console.log("Start timer");
+                  //console.log("Start timer");
                   setIsAssigned(true);
 
                   setShowToast(true);
@@ -264,7 +355,7 @@ export default function DoctorDashboard() {
                 }
                 audioRef.current.play();
 
-                setPendingConsults((prev) => [...prev, newRow]);
+                setPendingConsults([newRow]);
                 setTimeout(() => setShowToast(false), 2000);
                 }
     
@@ -329,6 +420,7 @@ export default function DoctorDashboard() {
   return () => clearInterval(interval);
  }, [isAssigned]);
 
+ 
 
 
 async function handleTimeoutReset() {
@@ -583,7 +675,7 @@ async function joinConsult(consultId: string) {
               <div className="bg-white rounded-lg p-2 sm:p-3 border border-gray-100">
                 <p className="text-xs sm:text-sm text-gray-700 leading-relaxed">
                   <span className="font-medium text-gray-800">Complaint: </span>
-                  {c.complaint}
+                  {c.symptoms || "—"}
                 </p>
               </div>
               
@@ -607,27 +699,133 @@ async function joinConsult(consultId: string) {
 
         {/* History */}
         {tab === "history" && (
-          <div className="p-4 space-y-4">
-            <div className="bg-white rounded-lg shadow p-4">
-              <h2 className="font-semibold text-black mb-3">
+        <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-200">
+            <div className="border-b border-gray-100 px-6 py-5">
+              <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+                <div className="w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                </div>
                 Previous Consultations
               </h2>
+              <p className="text-gray-600 text-sm mt-1">Your complete medical history and consultation records</p>
+            </div>
+            
+            <div className="p-6">
               {history.length === 0 ? (
-                <p className="text-slate-500">No previous consultations.</p>
-              ) : (
-                history.map((h) => (
-                  <div key={h.id} className="border rounded-lg p-3 mb-2">
-                    <p className="font-semibold">{h.patient_name}</p>
-                    <p className="text-sm text-slate-600">
-                      {new Date(h.created_at).toLocaleDateString()}
-                    </p>
-                    <p className="text-sm text-slate-700">{h.diagnosis}</p>
+                <div className="text-center py-16">
+                  <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
                   </div>
-                ))
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">No consultation history</h3>
+                  <p className="text-gray-500">Your past consultations and medical records will appear here</p>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {history.map((consultation, index) => (
+                    <div
+                      key={consultation.id}
+                      className="relative rounded-2xl border border-gray-200 bg-white p-6 hover:shadow-md hover:border-gray-300 transition-all duration-200"
+                    >
+                      {/* Header with date */}
+                      <div className="flex justify-between items-start mb-6">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600 font-bold text-sm">
+                            {history.length - index}
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">Consultation #{history.length - index}</p>
+                            <p className="text-xs text-gray-500">
+                              {consultation.created_at
+                                ? new Date(consultation.created_at).toLocaleDateString('en-US', {
+                                    weekday: 'long',
+                                    year: 'numeric',
+                                    month: 'long',
+                                    day: 'numeric'
+                                  })
+                                : "Date not available"}
+                            </p>
+                          </div>
+                        </div>
+                        
+                        <div className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                          consultation.diagnosis
+                            ? "bg-green-100 text-green-700"
+                            : "bg-yellow-100 text-yellow-700"
+                        }`}>
+                          {consultation.diagnosis ? "Diagnosed" : "Under Review"}
+                        </div>
+                      </div>
+
+                      {/* Content sections */}
+                      <div className="space-y-5">
+                        {/* Diagnosis section */}
+                        <div>
+                          <div className="flex items-center gap-2 mb-3">
+                            <div className="w-1.5 h-6 bg-red-400 rounded-full"></div>
+                            <h4 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                              Diagnosis
+                            </h4>
+                          </div>
+                          <p className={`text-lg font-semibold pl-4 ${
+                            consultation.diagnosis
+                              ? "text-gray-900"
+                              : "text-gray-400 italic font-normal"
+                          }`}>
+                            {consultation.diagnosis || "Pending medical review"}
+                          </p>
+                        </div>
+
+                        {/* Symptoms section */}
+                        <div>
+                          <div className="flex items-center gap-2 mb-3">
+                            <div className="w-1.5 h-6 bg-orange-400 rounded-full"></div>
+                            <h4 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                              Symptoms Reported
+                            </h4>
+                          </div>
+                          <p className={`text-base pl-4 leading-relaxed ${
+                            consultation.symptoms
+                              ? "text-gray-700"
+                              : "text-gray-400 italic"
+                          }`}>
+                            {consultation.symptoms || "No symptoms reported"}
+                          </p>
+                        </div>
+
+                        {/* Doctor notes section */}
+                        <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
+                          <div className="flex items-center gap-2 mb-3">
+                            <div className="w-1.5 h-6 bg-blue-400 rounded-full"></div>
+                            <h4 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                              Doctor's Notes & Recommendations
+                            </h4>
+                          </div>
+                          <p className={`text-base pl-4 leading-relaxed ${
+                            consultation.doctor_notes
+                              ? "text-gray-800"
+                              : "text-gray-400 italic"
+                          }`}>
+                            {consultation.doctor_notes || "No additional notes or recommendations provided"}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
           </div>
-        )}
+        </div>
+      )}
+
+
+
+
 
         {/* Payouts */}
         {tab === "payouts" && (
@@ -827,7 +1025,7 @@ async function joinConsult(consultId: string) {
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <span className="text-gray-400">🏦</span>
               </div>
-              <select
+              {/* <select
                 value={profile?.bank_name || ""}
                 onChange={(e) => setProfile({ ...profile, bank_name: e.target.value })}
                 className="w-full border border-gray-200 rounded-xl p-3 pl-10 
@@ -844,7 +1042,32 @@ async function joinConsult(consultId: string) {
                 <option value="GTBank">Guaranty Trust Bank (GTBank)</option>
                 <option value="Fidelity Bank">Fidelity Bank</option>
                 <option value="Union Bank">Union Bank</option>
+              </select> */}
+              <select
+                value={profile?.bank_code || ""}
+                onChange={(e) =>
+                  setProfile({
+                    ...profile,
+                    bank_code: e.target.value,
+                    bank_name: banks.find((b) => b.code === e.target.value)?.name || "",
+                  })
+                }
+                required
+                className="w-full border border-gray-200 text-black rounded-xl p-3 pl-10 focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">Select your bank</option>
+                {loadingBanks ? (
+                  <option disabled>Loading banks…</option>
+                ) : (
+                  banks.map((b) => (
+                    <option key={b.code} value={b.code}>
+                      {b.name}
+                    </option>
+                  ))
+                )}
               </select>
+
+
               <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
                 <span className="text-gray-400">▼</span>
               </div>
@@ -857,7 +1080,7 @@ async function joinConsult(consultId: string) {
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <span className="text-gray-400">💳</span>
               </div>
-              <input
+              {/* <input
                 type="tel"
                 value={profile?.bank_account_number || ""}
                 onChange={(e) => {
@@ -871,7 +1094,42 @@ async function joinConsult(consultId: string) {
                            hover:border-gray-300 transition-colors duration-200
                            bg-gray-50 focus:bg-white text-gray-800"
                 placeholder="Enter 10-digit account number"
+              /> */}
+              <input
+                type="tel"
+                value={profile?.bank_account_number || ""}
+                onChange={async (e) => {
+                  const val = e.target.value.replace(/\D/g, "");
+                  if (val.length <= 10) {
+                    setProfile({ ...profile, bank_account_number: val });
+                    setAccountName(null);
+
+                    if (val.length === 10 && profile?.bank_code) {
+                      // 🔑 call your backend to resolve account name
+                      const res = await fetch("/api/banks/resolve", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                          account_number: val,
+                          bank_code: profile.bank_code,
+                        }),
+                      });
+                      const data = await res.json();
+                      if (res.ok) setAccountName(data.account_name);
+                    }
+                  }
+                }}
+                placeholder="Enter 10-digit account number"
+                className="w-full border border-gray-200 text-black rounded-xl p-3 pl-10"
               />
+
+              {accountName && (
+                <p className="text-sm text-green-600 mt-2">
+                   Account name: {accountName}
+                </p>
+              )}
+
+
             </div>
             <p className="text-xs text-gray-500 mt-1">Enter your 10-digit account number</p>
           </div>
