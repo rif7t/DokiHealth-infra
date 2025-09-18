@@ -10,6 +10,29 @@ import { ConsultStatusWatcher } from "@/components/ConsultStatusWatcher"; // mak
 import { KeyboardDismissWrapper } from "@/components/KeyboardDismissWrapper";
 import MedicalHistoryForms from "./profile/MedicalHistoryForms";
 import PatientDashboardSearchParams from "./PatientDashboardSearchParams";
+import { AlertTriangle, Heart, Pill, Shield, TrendingUp, User } from "lucide-react";
+
+function toArray(v: string | string[] | null | undefined): string[] {
+        if (!v) return [];
+        if (Array.isArray(v)) return v.map(String).filter(Boolean);
+
+        const s = String(v).trim();
+        if (!s) return [];
+
+        // try parsing JSON (if value is stored as a JSON array string)
+        try {
+          const parsed = JSON.parse(s);
+          if (Array.isArray(parsed)) return parsed.map(String).filter(Boolean);
+        } catch {
+          // not JSON, fall back to splitting
+        }
+
+        // fallback: split on commas or semicolons
+        return s
+          .split(/[,;]\s*/)
+          .map((x) => x.trim())
+          .filter(Boolean);
+      }
 
 export default function PatientDashboard() {
   const router = useRouter();
@@ -19,6 +42,7 @@ export default function PatientDashboard() {
   const [loading, setLoading] = useState(false);
   // New Visit form state
   const [urgency, setUrgency] = useState("");
+  const [duration, setDuration] = useState("");
   const [symptom, setSymptom] = useState("");
   const [greeting, setGreeting] = useState("Hello");
   const [showWatcher, setShowWatcher] = useState(false);
@@ -86,8 +110,12 @@ export default function PatientDashboard() {
      try {
 
     setLoading(true);
+
+    const fullSymptoms = `${symptom} (Duration: ${duration || "N/A"}, Urgency: ${
+    urgency || "N/A"
+  })`;
     // Now create a consult request
-    await startConsult(symptom);
+    await startConsult(fullSymptoms);
     // alert("✅ Consultation request submitted successfully!")
 
   } catch (e: any) {
@@ -99,10 +127,12 @@ export default function PatientDashboard() {
 
     
     // Reset form
-    setSymptom("");
+    //setSymptom("");
     //setDuration("");
     setUrgency("");
     //setType("video");
+    setDuration("");
+    
 
     
 
@@ -190,6 +220,10 @@ export default function PatientDashboard() {
 if (profile === null && isNewUser === true) {
   // ⏳ Still fetching profile, don’t render dashboard or forms yet
   setIsNewUser(false);
+
+      
+
+
   return (
     
     <div className="flex items-center justify-center h-screen">
@@ -297,7 +331,10 @@ if (profile === null && isNewUser === true) {
         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
           <span className="text-gray-400">⏰</span>
         </div>
-        <select className="w-full border border-gray-200 rounded-xl p-3 pl-10 
+        <select
+        value={duration}
+        onChange={(e) => setDuration(e.target.value)}
+        className="w-full border border-gray-200 rounded-xl p-3 pl-10 
                           focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
                           hover:border-gray-300 transition-colors duration-200
                           bg-gray-50 focus:bg-white text-gray-800 appearance-none">
@@ -346,7 +383,10 @@ if (profile === null && isNewUser === true) {
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <span className="text-gray-400">📊</span>
           </div>
-          <select className="w-full border border-gray-200 rounded-xl p-3 pl-10 
+          <select
+          value={urgency}
+          onChange={(e) => setUrgency(e.target.value)}
+          className="w-full border border-gray-200 rounded-xl p-3 pl-10 
                             focus:ring-2 focus:ring-blue-500 focus:border-blue-500 
                             hover:border-gray-300 transition-colors duration-200
                             bg-gray-50 focus:bg-white text-gray-800 appearance-none">
@@ -415,88 +455,269 @@ if (profile === null && isNewUser === true) {
             
           )}
 
-        {/* History */}
         {activeTab === "history" && (
-          <div className="bg-white text-black rounded-xl shadow p-4">
-            <h2 className="text-lg font-semibold mb-4">Consultation History</h2>
-            {consultations.length === 0 ? (
-              <p className="text-slate-500">No consultations yet.</p>
-            ) : (
-              consultations.map((c) => (
-                <div
-                  key={c.id}
-                  className="p-3 mb-2 rounded-lg border bg-slate-50"
-                >
-                  <div className="flex justify-between items-center">
-                    <span className="font-medium text-slate-800">
-                      Dr. {c.doctor_name || "Unknown"}
-                    </span>
-                    <span className="px-2 py-1 text-xs rounded-full bg-green-100 text-green-600">
-                      {c.status}
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-500">
-                    {new Date(c.created_at).toLocaleString()}
-                  </p>
-                  <p className="text-sm text-slate-700 mt-1">{c.reason}</p>
+        <div className="p-6 space-y-6 bg-gray-50 min-h-screen">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-200">
+            <div className="border-b border-gray-100 px-6 py-5">
+              <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-3">
+                <div className="w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
                 </div>
-              ))
-            )}
-          </div>
-        )}
-
-        {/* Health */}
-        {activeTab === "health" && (
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-3">
-              <div className="bg-white p-4 rounded-xl shadow text-center">
-                <div className="text-2xl font-bold text-blue-600">
-                  {totalVisits}
-                </div>
-                <p className="text-sm text-slate-500">Total Visits</p>
-              </div>
-              <div className="bg-white p-4 rounded-xl shadow text-center">
-                <div className="text-2xl font-bold text-red-600">0</div>
-                <p className="text-sm text-slate-500">Active Meds</p>
-              </div>
-              <div className="bg-white p-4 rounded-xl shadow text-center">
-                <div className="text-2xl font-bold text-green-600">
-                  {specialists}
-                </div>
-                <p className="text-sm text-slate-500">Specialists</p>
-              </div>
-              <div className="bg-white p-4 rounded-xl shadow text-center">
-                <div className="text-lg font-bold text-slate-700">
-                  {lastVisit}
-                </div>
-                <p className="text-sm text-slate-500">Last Visit</p>
-              </div>
+                Previous Consultations
+              </h2>
+              <p className="text-gray-600 text-sm mt-1">Your complete medical history and consultation records</p>
             </div>
-
-            <div className="bg-white p-4 rounded-xl shadow">
-              <h3 className="text-lg text-black font-semibold mb-2">Health Overview</h3>
-              {consultations.length === 0 ? (
-                <p className="text-slate-500">No feedback available yet.</p>
+            
+            <div className="p-6">
+              {history.length === 0 ? (
+                <div className="text-center py-16">
+                  <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">No consultation history</h3>
+                  <p className="text-gray-500">Your past consultations and medical records will appear here</p>
+                </div>
               ) : (
-                consultations
-                  .filter((c) => c.feedback)
-                  .map((c) => (
-                    <p
-                      key={c.id}
-                      className="text-sm text-slate-700 border-l-4 border-blue-300 pl-2 mb-2"
+                <div className="space-y-6">
+                  {consultations.map((consultation, index) => (
+                    <div
+                      key={consultation.id}
+                      className="relative rounded-2xl border border-gray-200 bg-white p-6 hover:shadow-md hover:border-gray-300 transition-all duration-200"
                     >
-                      {c.feedback}
-                    </p>
-                  ))
+                      {/* Header with date */}
+                      <div className="flex justify-between items-start mb-6">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center text-blue-600 font-bold text-sm">
+                            {history.length - index}
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">Consultation #{history.length - index}</p>
+                            <p className="text-xs text-gray-500">
+                              {consultation.created_at
+                                ? new Date(consultation.created_at).toLocaleDateString('en-US', {
+                                    weekday: 'long',
+                                    year: 'numeric',
+                                    month: 'long',
+                                    day: 'numeric'
+                                  })
+                                : "Date not available"}
+                            </p>
+                          </div>
+                        </div>
+                        
+                        <div className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                          consultation.diagnosis
+                            ? "bg-green-100 text-green-700"
+                            : "bg-yellow-100 text-yellow-700"
+                        }`}>
+                          {consultation.diagnosis ? "Diagnosed" : "Under Review"}
+                        </div>
+                      </div>
+
+                      {/* Content sections */}
+                      <div className="space-y-5">
+                        {/* Diagnosis section */}
+                        <div>
+                          <div className="flex items-center gap-2 mb-3">
+                            <div className="w-1.5 h-6 bg-red-400 rounded-full"></div>
+                            <h4 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                              Diagnosis
+                            </h4>
+                          </div>
+                          <p className={`text-lg font-semibold pl-4 ${
+                            consultation.diagnosis
+                              ? "text-gray-900"
+                              : "text-gray-400 italic font-normal"
+                          }`}>
+                            {consultation.diagnosis || "Pending medical review"}
+                          </p>
+                        </div>
+
+                        {/* Symptoms section */}
+                        <div>
+                          <div className="flex items-center gap-2 mb-3">
+                            <div className="w-1.5 h-6 bg-orange-400 rounded-full"></div>
+                            <h4 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                              Symptoms Reported
+                            </h4>
+                          </div>
+                          <p className={`text-base pl-4 leading-relaxed ${
+                            consultation.symptoms
+                              ? "text-gray-700"
+                              : "text-gray-400 italic"
+                          }`}>
+                            {consultation.symptoms || "No symptoms reported"}
+                          </p>
+                        </div>
+
+                        {/* Doctor notes section */}
+                        <div className="bg-blue-50 rounded-xl p-4 border border-blue-100">
+                          <div className="flex items-center gap-2 mb-3">
+                            <div className="w-1.5 h-6 bg-blue-400 rounded-full"></div>
+                            <h4 className="text-sm font-semibold text-gray-700 uppercase tracking-wide">
+                              Doctor's Notes & Recommendations
+                            </h4>
+                          </div>
+                          <p className={`text-base pl-4 leading-relaxed ${
+                            consultation.doctor_notes
+                              ? "text-gray-800"
+                              : "text-gray-400 italic"
+                          }`}>
+                            {consultation.doctor_notes || "No additional notes or recommendations provided"}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
+          </div>
+        </div>
+      )}
 
-            <div className="bg-white p-4 rounded-xl shadow">
-              <h3 className="text-lg text-black font-semibold mb-2">Vital Signs</h3>
-              <p className="text-slate-500 text-sm">No vitals recorded yet.</p>
+
+        {/* Health */}
+{activeTab === "health" && (
+  <div className="space-y-4">
+    {/* Stats grid */}
+    <div className="grid grid-cols-2 gap-3">
+      <div className="bg-white p-4 rounded-xl shadow text-center">
+        <div className="text-2xl font-bold text-blue-600">{totalVisits}</div>
+        <p className="text-sm text-slate-500">Total Visits</p>
+      </div>
+      <div className="bg-white p-4 rounded-xl shadow text-center">
+        <div className="text-2xl font-bold text-red-600">
+          {[
+            ...toArray(profile?.prescriptions),
+            ...toArray(profile?.over_the_counter),
+            ...toArray(profile?.supplements),
+          ].length}
+        </div>
+        <p className="text-sm text-slate-500">Active Medications</p>
+      </div>
+      <div className="bg-white p-4 rounded-xl shadow text-center">
+        <div className="text-2xl font-bold text-green-600">{specialists}</div>
+        <p className="text-sm text-slate-500">Specialists Seen</p>
+      </div>
+      <div className="bg-white p-4 rounded-xl shadow text-center">
+        <div className="text-lg font-bold text-slate-700">
+          {lastVisit || "—"}
+        </div>
+        <p className="text-sm text-slate-500">Last Visit</p>
+      </div>
+    </div>
+
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-200">
+            <div className="border-b border-gray-100 px-6 py-5">
+              <h3 className="text-xl font-bold text-gray-900 flex items-center gap-3">
+                <div className="w-10 h-10 bg-purple-500 rounded-xl flex items-center justify-center">
+                  <Heart className="w-5 h-5 text-white" />
+                </div>
+                Health Overview
+              </h3>
+              <p className="text-gray-600 text-sm mt-1">Complete medical profile and health summary</p>
+            </div>
+            
+            <div className="p-6">
+              {!profile ? (
+                <div className="text-center py-8">
+                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <User className="w-8 h-8 text-gray-400" />
+                  </div>
+                  <p className="text-gray-500 text-sm">Loading profile…</p>
+                </div>
+              ) : (
+                <div className="space-y-5">
+                  {/* Chronic Conditions */}
+                  <div className="p-4 bg-orange-50 rounded-xl border border-orange-200">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
+                        <TrendingUp className="w-4 h-4 text-orange-600" />
+                      </div>
+                      <span className="font-semibold text-gray-800">Chronic Conditions</span>
+                    </div>
+                    <p className="text-gray-700 pl-11">
+                      {toArray(profile.chronic_conditions).length > 0
+                        ? toArray(profile.chronic_conditions).join(", ")
+                        : "None reported"}
+                    </p>
+                  </div>
+
+                  {/* Allergies */}
+                  <div className="p-4 bg-red-50 rounded-xl border border-red-200">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center">
+                        <AlertTriangle className="w-4 h-4 text-red-600" />
+                      </div>
+                      <span className="font-semibold text-gray-800">Allergies</span>
+                    </div>
+                    <p className="text-gray-700 pl-11">
+                      {[
+                        ...toArray(profile.drug_allergies),
+                        ...toArray(profile.food_allergies),
+                      ].length > 0
+                        ? [
+                            ...toArray(profile.drug_allergies),
+                            ...toArray(profile.food_allergies),
+                          ].join(", ")
+                        : "None reported"}
+                    </p>
+                  </div>
+
+                  {/* Medications */}
+                  <div className="p-4 bg-blue-50 rounded-xl border border-blue-200">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <Pill className="w-4 h-4 text-blue-600" />
+                      </div>
+                      <span className="font-semibold text-gray-800">Current Medications</span>
+                    </div>
+                    <p className="text-gray-700 pl-11">
+                      {[
+                        ...toArray(profile.prescriptions),
+                        ...toArray(profile.over_the_counter),
+                        ...toArray(profile.supplements),
+                      ].length > 0
+                        ? [
+                            ...toArray(profile.prescriptions),
+                            ...toArray(profile.over_the_counter),
+                            ...toArray(profile.supplements),
+                          ].join(", ")
+                        : "None reported"}
+                    </p>
+                  </div>
+
+                  {/* Family History */}
+                  <div className="p-4 bg-indigo-50 rounded-xl border border-indigo-200">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center">
+                        <Shield className="w-4 h-4 text-indigo-600" />
+                      </div>
+                      <span className="font-semibold text-gray-800">Family History</span>
+                    </div>
+                    <p className="text-gray-700 pl-11">
+                      {toArray(profile.family_history).length > 0
+                        ? toArray(profile.family_history).join(", ")
+                        : "None reported"}
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
-        )}
+    {/* Vitals */}
+    <div className="bg-white p-4 rounded-xl shadow">
+      <h3 className="text-lg text-black font-semibold mb-2">Vital Signs</h3>
+      <p className="text-slate-500 text-sm">No vitals recorded yet.</p>
+    </div>
+  </div>
+)}
+
       
         {/* Account */}
       {activeTab === "account" && (

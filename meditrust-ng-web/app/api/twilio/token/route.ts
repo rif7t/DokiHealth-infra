@@ -8,6 +8,11 @@ const TWILIO_ACCOUNT_SID = process.env.TWILIO_ACCOUNT_SID!;
 const TWILIO_API_KEY_SID = process.env.TWILIO_API_KEY_SID!;
 const TWILIO_API_KEY_SECRET = process.env.TWILIO_API_KEY_SECRET!;
 
+// tiny helper to JSON
+const json = (data: unknown, status = 200) =>
+  new Response(JSON.stringify(data), { status, headers: { "content-type": "application/json" } });
+
+
 export async function POST(req: Request) {
   try {
     const authHeader = req.headers.get("authorization");
@@ -27,9 +32,13 @@ export async function POST(req: Request) {
     // Check DB: is this consult assigned to this user?
     const { data: consult } = await supabase
       .from("consult")
-      .select("id, patient_id, doctor_id")
+      .select("id, patient_id, doctor_id, status")
       .eq("id", consult_id)
       .maybeSingle();
+
+      
+
+    
 
     if (!consult) return NextResponse.json({ error: "Not found" }, { status: 404 });
     if (![consult.patient_id, consult.doctor_id].includes(user.id)) {
