@@ -4,13 +4,19 @@ import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { motion, AnimatePresence } from "framer-motion";
 import { publish } from "@/lib/eventBus";
+import { useRouter } from "next/navigation";
+import DoctorConsultWatcher from "@/components/DoctorConsultWatcher";
+
 
 export default function DoctorBell({ pendingConsults, setPendingConsults }) {
   const [open, setOpen] = useState(false);
   const [userid, setUserid] = useState("");
-  
+  const [watching, setWatching] = useState(false);
+  const [activeConsultId, setActiveConsultId] = useState<string | null>(null);
 
   const popupRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
+  
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent | TouchEvent) {
@@ -114,6 +120,8 @@ export default function DoctorBell({ pendingConsults, setPendingConsults }) {
     setPendingConsults((prev) => prev.filter((c) => c.id !== consultId));
 
     publish("consult:accepted", consultId);
+    setActiveConsultId(String(consultId));
+    setWatching(true);
   } catch (err) {
     console.error("Error accepting consult:", err);
     alert("❌ Failed to accept consult");
@@ -162,74 +170,95 @@ export default function DoctorBell({ pendingConsults, setPendingConsults }) {
   }
 };
 return (
-    <div className="relative">
-      {/* 🔔 bell button */}
-      <button
-        onClick={() => setOpen((prev) => !prev)}
-        className="relative text-2xl"
-      >
-        🔔
-        {pendingConsults.length > 0 && (
-          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-1.5">
-            {pendingConsults.length}
-          </span>
-        )}
-      </button>
+  <div className="relative">
+    {/* 🔔 bell button */}
+    <button
+      onClick={() => setOpen((prev) => !prev)}
+      className="relative text-2xl"
+    >
+      🔔
+      {pendingConsults.length > 0 && (
+        <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full px-1.5">
+          {1}
+        </span>
+      )}
+    </button>
 
-      {/* Popup card */}
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            ref={popupRef}
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.2, ease: "easeOut" }}
-            className="absolute right-0 mt-2 w-80 max-h-[70vh] overflow-y-auto bg-white shadow-lg rounded-xl border p-4 z-50"
-          >
-            <h3 className="font-semibold mb-3 text-gray-900">Pending Consult</h3>
+    {/* Popup card */}
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          ref={popupRef}
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          transition={{ duration: 0.2, ease: "easeOut" }}
+          className="absolute right-0 mt-2 w-80 max-h-[70vh] overflow-y-auto bg-white shadow-lg rounded-xl border p-4 z-50"
+        >
+          <h3 className="font-semibold mb-3 text-gray-900">Pending Consult</h3>
 
-            {pendingConsults.length === 0 ? (
-              <p className="text-sm text-gray-500">No new consults</p>
-            ) : (
-              <ul className="space-y-3">
-                {pendingConsults.map((c) => (
-                  <li
-                    key={c.id}
-                    className="p-3 border rounded-lg bg-gray-50 flex flex-col gap-2"
-                  >
-                    <div className="flex justify-between items-center">
-                      <span className="font-medium text-gray-800">
-                        Consult #{c.id}
-                      </span>
-                      <span className="text-xs text-gray-500">
-                        {c.created_at ? new Date(c.created_at).toLocaleString() : ""}
-                      </span>
-                    </div>
+          {pendingConsults.length === 0 ? (
+            <p className="text-sm text-gray-500">No new consults</p>
+          ) : (
+            <ul className="space-y-3">
+              {pendingConsults.slice(-1).map((c) => (
+                <li
+                  key={c.id}
+                  className="p-3 border rounded-lg bg-gray-50 flex flex-col gap-2"
+                >
+                  <div className="flex justify-between items-center">
+                    <span className="font-medium text-gray-800">
+                      Consult #{c.id}
+                    </span>
+                    <span className="text-xs text-gray-500">
+                      {c.created_at
+                        ? new Date(c.created_at).toLocaleString()
+                        : ""}
+                    </span>
+                  </div>
 
-                    <span className="text-sm text-gray-600">{c.symptoms}</span>
+                  <span className="text-sm text-gray-600">{c.symptoms}</span>
 
-                    <div className="flex gap-3 pt-2">
-                      <button
-                        onClick={() => acceptConsult(c.id)}
-                        className="flex-1 bg-green-500 text-white rounded-md px-3 py-1 hover:bg-green-600 transition"
-                      >
-                        Accept
-                      </button>
-                      <button
-                        onClick={() => rejectConsult(c.id)}
-                        className="flex-1 bg-red-500 text-white rounded-md px-3 py-1 hover:bg-red-600 transition"
-                      >
-                        Reject
-                      </button>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
+                  <div className="flex gap-3 pt-2">
+                    <button
+                      onClick={() => acceptConsult(c.id)}
+                      className="flex-1 bg-green-500 text-white rounded-md px-3 py-1 hover:bg-green-600 transition"
+                    >
+                      Accept
+                    </button>
+                    <button
+                      onClick={() => rejectConsult(c.id)}
+                      className="flex-1 bg-red-500 text-white rounded-md px-3 py-1 hover:bg-red-600 transition"
+                    >
+                      Reject
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </motion.div>
+      )}
+    </AnimatePresence>
+
+    {watching && activeConsultId && userid && (
+        <DoctorConsultWatcher
+          consultId={activeConsultId}
+          doctorId={userid}
+          onUnmount={(reason) => {
+            setWatching(false);
+            setActiveConsultId(null);
+            if (reason === "ended") {
+              router.push("/dashboard/doctor");
+            }
+            if (reason === "unassigned" || reason === "error") {
+              router.push("/dashboard/doctor");
+            }
+          }}
+        />
+      )}
+
+  </div>
+);
+
 }

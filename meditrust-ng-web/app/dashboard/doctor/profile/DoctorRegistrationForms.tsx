@@ -152,8 +152,12 @@ const age = calculateAge(formData.dateOfBirth);
   paystack_recipient_code: null,
 };
 
+
+
+
 const {data,  error } = await supabase.from("profile").upsert(payload).select()
       .maybeSingle();
+
 
 
     setLoading(false);
@@ -165,7 +169,9 @@ const {data,  error } = await supabase.from("profile").upsert(payload).select()
       alert("Doctor profile saved successfully!");
        //router.replace("/dashboard/doctor");
     }
+    
     if(onSuccess && data) onSuccess(data);
+    
   };
 
   // --- UI Renders (same structure you already had) ---
