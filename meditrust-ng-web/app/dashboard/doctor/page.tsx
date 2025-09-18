@@ -32,6 +32,7 @@ export default function DoctorDashboard() {
   const [banks, setBanks] = useState<{ name: string; code: string }[]>([]);
   const [loadingBanks, setLoadingBanks] = useState(true);
   const [accountName, setAccountName] = useState<string | null>(null);
+  const [totalPatients, setTotalPatients] = useState(0);
   
 
   const [doctorId, setDoctorId] = useState<string | null>(null);
@@ -52,6 +53,25 @@ export default function DoctorDashboard() {
     historyRef.current = newItems; // instant update
     setHistory(newItems);          // triggers React render
   };
+
+
+  useEffect(() => {
+  const fetchTotalPatients = async () => {
+    const { data, error } = await supabase
+      .from("consult")
+      .select("patient_id")
+      .eq("doctor_id", doctorId);
+
+    if (error) {
+      console.error(error);
+    } else {
+      const uniquePatients = new Set(data.map(c => c.patient_id));
+      setTotalPatients(uniquePatients.size);
+    }
+  };
+
+  fetchTotalPatients();
+}, [doctorId]);
 
  useEffect(() => {
     async function fetchHistory() {
@@ -575,7 +595,7 @@ async function joinConsult(consultId: string) {
         <div className="w-8 h-8 sm:w-12 sm:h-12 bg-purple-100 rounded-lg sm:rounded-xl flex items-center justify-center mx-auto mb-2 sm:mb-3">
           <span className="text-purple-600 text-sm sm:text-xl">🏥</span>
         </div>
-        <div className="text-lg sm:text-2xl font-bold text-gray-800 mb-1">142</div>
+        <div className="text-lg sm:text-2xl font-bold text-gray-800 mb-1">{totalPatients}</div>
         <p className="text-gray-600 text-xs sm:text-sm font-medium">Total Patients</p>
       </div>
     </div>
