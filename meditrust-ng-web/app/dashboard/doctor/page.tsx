@@ -82,7 +82,7 @@ export default function DoctorDashboard() {
         doctor_notes: row.doctor_notes,
       }));
 
-      console.log("Mapped consults:", mapped);
+      //console.log("Mapped consults:", mapped);
       updateHistory(mapped);
     }
 
@@ -91,7 +91,7 @@ export default function DoctorDashboard() {
 
   // log whenever state updates
   useEffect(() => {
-    console.log("History state updated:", history);
+    //console.log("History state updated:", history);
   }, [history]);
 
   // access ref any time (latest value, instantly updated)
@@ -277,6 +277,7 @@ export default function DoctorDashboard() {
         last_name: profile.last_name,
         specialty: profile.specialty,
         doctor_bio: profile.doctor_bio,
+        phone_number:profile.phone_number,
         bank_account_number: profile.bank_account_number,
         bank_name: profile.bank_name,
         email: profile.email || session.user?.email,
