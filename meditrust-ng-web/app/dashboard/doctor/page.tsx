@@ -23,7 +23,7 @@ export default function DoctorDashboard() {
 };
   const [tab, setTab] = useState("overview");
   const [status, setStatus] = useState("Nil");
-  const [availability, setAvailability] = useState(true);
+  const [availability, setAvailability] = useState(false);
   const [consultations, setConsultations] = useState<any[]>([]);
   //const [history, setHistory] = useState<any[]>([]);
   const [payouts, setPayouts] = useState<any[]>([]);
