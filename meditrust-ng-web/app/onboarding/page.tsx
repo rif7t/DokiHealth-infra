@@ -73,7 +73,7 @@ export default function OnboardingPage() {
   <div className="w-full flex justify-center -pt-2">
   <div className="flex items-center">
     <img src="/logo.png" alt="MediTrust Logo" className="w-10 h-10" />
-    <span className="text-2xl font-bold text-blue-700">Doki</span>
+    <span className="text-2xl font-bold text-blue-700">Doki Health</span>
   </div>
 </div>
 
