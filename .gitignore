@@ -7,6 +7,9 @@ build/
 .expo/
 .expo-shared/
 
+# React 
+.next/
+
 # React Native
 ios/Pods/
 android/.gradle/

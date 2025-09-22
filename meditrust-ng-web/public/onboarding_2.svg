@@ -1,0 +1,43 @@
+<svg width="50" height="30" viewBox="0 0 480 440" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="teal" x1="160" y1="120" x2="560" y2="600" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#00B8A9"/>
+      <stop offset="1" stop-color="#9CF0C4"/>
+    </linearGradient>
+    <filter id="shadow2" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="14" flood-opacity="0.15"/>
+    </filter>
+  </defs>
+
+  <!-- Payment card -->
+  <rect x="0" y="0" width="480" height="440" rx="28" fill="white" stroke="#E6E9EF" filter="url(#shadow2)"/>
+
+  <!-- Escrow header -->
+  <rect x="40" y="40" width="400" height="56" rx="12" fill="#F3F6FA"/>
+  <text x="240" y="74" text-anchor="middle" font-family="Inter, Arial" font-size="18" fill="#0F172A">Payment via Escrow (₦)</text>
+
+  <!-- Naira notes -->
+  <rect x="70" y="112" width="180" height="100" rx="12" fill="#E6FBF8" stroke="#99E7DE"/>
+  <text x="160" y="170" text-anchor="middle" font-family="Inter, Arial" font-size="28" fill="#0F766E">₦</text>
+  <rect x="110" y="130" width="40" height="8" rx="4" fill="#ACEADF"/>
+  <rect x="110" y="146" width="60" height="8" rx="4" fill="#ACEADF"/>
+
+  <rect x="210" y="128" width="180" height="100" rx="12" fill="#F9FAFB" stroke="#E6E9EF"/>
+  <text x="300" y="186" text-anchor="middle" font-family="Inter, Arial" font-size="28" fill="#94A3B8">₦</text>
+
+  <!-- Lock box showing “held” -->
+  <rect x="80" y="240" width="320" height="80" rx="16" fill="#E6FBF8" stroke="#99E7DE"/>
+  <rect x="100" y="256" width="70" height="40" rx="8" fill="#FFFFFF" stroke="#99E7DE"/>
+  <path d="M115 256v-10a14 14 0 0 1 14-14 14 14 0 0 1 14 14v10" stroke="#14B8A6" stroke-width="3" fill="none"/>
+  <circle cx="129" cy="276" r="4" fill="#14B8A6"/>
+  <path d="M129 280v10" stroke="#14B8A6" stroke-width="3" stroke-linecap="round"/>
+
+  <!-- Release pill -->
+  <rect x="190" y="256" width="190" height="40" rx="20" fill="url(#teal)" opacity="0.15"/>
+  <text x="285" y="281" text-anchor="middle" font-family="Inter, Arial" font-size="16" fill="#0F766E">Funds held until session completes</text>
+
+  <!-- Success check -->
+  <circle cx="360" cy="330" r="18" fill="#E6FBF8" stroke="#99E7DE"/>
+  <path d="M352 330l8 8 12-14" stroke="#14B8A6" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="240" y="364" text-anchor="middle" font-family="Inter, Arial" font-size="16" fill="#334155">Auto-release or refund if no session</text>
+</svg>
