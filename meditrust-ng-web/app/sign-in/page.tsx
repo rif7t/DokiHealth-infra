@@ -154,7 +154,7 @@ export default function SignInPage() {
           <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
             <span className="text-2xl">🏥</span>
           </div>
-          <h1 className="text-2xl font-bold text-white">Doki</h1>
+          <h1 className="text-2xl font-bold text-white">Doki Health</h1>
         </div>
         <p className="text-blue-100 text-sm">Your trusted healthcare platform</p>
       </div>
@@ -341,7 +341,7 @@ export default function SignInPage() {
             <div className="absolute -top-1 -right-1 w-6 h-6 bg-gradient-to-r from-green-500 to-green-600 rounded-full opacity-30 flex items-center justify-center shadow-md" />
           </div>
           <h3 className="text-gray-800 text-xl font-bold mb-2">
-            Welcome to Doki!
+            Welcome to Doki Health!
           </h3>
           <p className="text-gray-600 text-sm">
             Your healthcare journey begins now
