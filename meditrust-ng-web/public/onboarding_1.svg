@@ -1,0 +1,51 @@
+<svg width="50" height="30" viewBox="0 0 480 440" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Canonical doctor avatar (52x52). Stethoscope is DRAWN LAST here. -->
+    <symbol id="doctor-avatar" viewBox="0 0 52 52">
+      <!-- Avatar circle -->
+      <circle cx="26" cy="26" r="26" fill="#F3F6FA"/>
+      <!-- Head -->
+      <circle cx="26" cy="18" r="10" fill="#CBD5E1"/>
+      <!-- Torso -->
+      <path d="M12 44c0-8 7-14 14-14s14 6 14 14v8H12v-8z" fill="#CBD5E1"/>
+      <!-- STETHOSCOPE OVERLAY (last) -->
+      <path d="M20 30c-4 9-4 20 4 26c5 4 12 4 16 -1" stroke="#00B8A9" stroke-width="2.2" fill="none"/>
+      <path d="M32 30c4 9 4 20 -4 26" stroke="#00B8A9" stroke-width="2.2" fill="none"/>
+      <circle cx="36" cy="56" r="5" fill="white" stroke="#00B8A9" stroke-width="2"/>
+    </symbol>
+  </defs>
+
+  <!-- Phone card fills the whole canvas -->
+  <rect x="0" y="0" width="480" height="440" rx="28" fill="white" stroke="#E6E9EF"/>
+
+  <!-- Specialty chips -->
+  <rect x="40" y="40" width="120" height="36" rx="18" fill="#E6FBF8" stroke="#99E7DE"/>
+  <text x="100" y="64" text-anchor="middle" font-family="Inter, Arial" font-size="16" fill="#0F766E">Neurology</text>
+  <rect x="180" y="40" width="120" height="36" rx="18" fill="#F3F6FA"/>
+  <text x="240" y="64" text-anchor="middle" font-family="Inter, Arial" font-size="16" fill="#6B7280">Radiology</text>
+
+  <!-- Row 1 -->
+  <use href="#doctor-avatar" x="40" y="100" width="52" height="52"/>
+  <rect x="100" y="108" width="180" height="14" rx="7" fill="#E5EEF6"/>
+  <rect x="100" y="128" width="140" height="10" rx="5" fill="#E5EEF6"/>
+  <circle cx="320" cy="120" r="14" fill="#E6FBF8" stroke="#99E7DE"/>
+  <path d="M314 120l6 6 10-12" stroke="#14B8A6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Row 2 -->
+  <use href="#doctor-avatar" x="40" y="160" width="52" height="52"/>
+  <rect x="100" y="168" width="180" height="14" rx="7" fill="#E5EEF6"/>
+  <rect x="100" y="188" width="120" height="10" rx="5" fill="#E5EEF6"/>
+  <circle cx="320" cy="180" r="14" fill="#E6FBF8" stroke="#99E7DE"/>
+  <path d="M314 180l6 6 10-12" stroke="#14B8A6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- Featured card -->
+  <rect x="40" y="240" width="320" height="100" rx="16" fill="#F9FAFB" stroke="#EEF2F7"/>
+  <use href="#doctor-avatar" x="56" y="256" width="68" height="68"/>
+  <rect x="136" y="264" width="160" height="14" rx="7" fill="#E5EEF6"/>
+  <rect x="136" y="284" width="120" height="10" rx="5" fill="#E5EEF6"/>
+  <rect x="136" y="304" width="140" height="10" rx="5" fill="#E5EEF6"/>
+  <circle cx="320" cy="290" r="16" fill="#E6FBF8" stroke="#99E7DE"/>
+  <path d="M312 290l8 8 12-14" stroke="#14B8A6" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+
+

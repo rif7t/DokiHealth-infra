@@ -1,0 +1,63 @@
+.doctors-background {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.doctor-silhouette {
+  position: absolute;
+  opacity: 0.08;
+}
+
+.doctor-1 {
+  width: 200px;
+  height: 300px;
+  background: #4299e1;
+  clip-path: polygon(40% 0%, 60% 0%, 70% 15%, 75% 25%, 80% 35%, 85% 45%, 85% 65%, 80% 75%, 75% 85%, 70% 95%, 30% 95%, 25% 85%, 20% 75%, 15% 65%, 15% 45%, 20% 35%, 25% 25%, 30% 15%);
+  top: 10%;
+  left: 5%;
+  animation: float 8s ease-in-out infinite;
+}
+
+.doctor-2 {
+  width: 180px;
+  height: 280px;
+  background: #2b6cb0;
+  clip-path: polygon(42% 0%, 58% 0%, 68% 12%, 73% 22%, 78% 32%, 83% 42%, 83% 62%, 78% 72%, 73% 82%, 68% 92%, 32% 92%, 27% 82%, 22% 72%, 17% 62%, 17% 42%, 22% 32%, 27% 22%, 32% 12%);
+  top: 60%;
+  left: 10%;
+  animation: float 10s ease-in-out infinite;
+  animation-delay: 2s;
+}
+
+.doctor-3 {
+  width: 220px;
+  height: 320px;
+  background: #3182ce;
+  clip-path: polygon(38% 0%, 62% 0%, 72% 18%, 77% 28%, 82% 38%, 87% 48%, 87% 68%, 82% 78%, 77% 88%, 72% 98%, 28% 98%, 23% 88%, 18% 78%, 13% 68%, 13% 48%, 18% 38%, 23% 28%, 28% 18%);
+  top: 20%;
+  right: 8%;
+  animation: float 12s ease-in-out infinite;
+  animation-delay: 4s;
+}
+
+.doctor-4 {
+  width: 190px;
+  height: 290px;
+  background: #2c5282;
+  clip-path: polygon(41% 0%, 59% 0%, 69% 14%, 74% 24%, 79% 34%, 84% 44%, 84% 64%, 79% 74%, 74% 84%, 69% 94%, 31% 94%, 26% 84%, 21% 74%, 16% 64%, 16% 44%, 21% 34%, 26% 24%, 31% 14%);
+  top: 65%;
+  right: 5%;
+  animation: float 9s ease-in-out infinite;
+  animation-delay: 6s;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  25% { transform: translateY(-15px) rotate(1deg); }
+  50% { transform: translateY(-10px) rotate(0deg); }
+  75% { transform: translateY(-20px) rotate(-1deg); }
+}
