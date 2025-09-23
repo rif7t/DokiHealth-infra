@@ -1016,6 +1016,7 @@ async function joinConsult(consultId: string) {
               <option value="Dermatology">👤 Dermatology</option>
               <option value="Endocrinology">🔬 Endocrinology</option>
               <option value="Gastroenterology">🫁 Gastroenterology</option>
+              <option value="Physiotherapy"> Physiotherapy</option>
               <option value="Neurology">🧠 Neurology</option>
               <option value="Orthopedics">🦴 Orthopedics</option>
               <option value="Psychiatry">🧘 Psychiatry</option>
