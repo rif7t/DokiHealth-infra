@@ -52,6 +52,7 @@ export default function ProfileForm() {
 
       // Redirect based on role
       if (role === "doctor") {
+        alert("We're currently not accepting new doctor sign-ups, please reach out to meditrusthq@gmail.com to signup");
         router.replace("/dashboard/doctor");
       } else {
         router.replace("/dashboard/patient");
