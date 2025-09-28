@@ -17,37 +17,37 @@ export default function OnboardingPage() {
   }, []);
 
   const slides = [
+  {
+    icon: "🔍",
+    title: "Matched to the Right Doctor",
+    desc: "Skip the search stress. Tell us your concern, and we’ll instantly connect you to the right certified doctor for your needs.",
+  },
+  {
+    icon: "💬",
+    title: "Seamless Consultations",
+    desc: "Talk to your doctor over secure voice or video calls — simple, reliable, and built for real care.",
+  },
+  {
+    icon: "💳",
+    title: "Protected Payments",
+    desc: "Payments are handled safely through our escrow system. Doctors are paid for completed sessions, and patients are protected if something goes wrong.",
+  },
+  {
+    icon: "🩺",
+    title: "Care That Continues",
+    desc: "Get professional advice, prescriptions, and follow-up plans — all without leaving your home.",
+  },
+  {
+    icon: "📋",
+    title: "Your Health in One Place",
+    desc: "View your records, follow your progress, and keep everything about your health organized securely in the app.",
+  },
     {
-      icon: "🔍",
-      title: "Find Your Doctor",
-      desc: "Browse our network of certified healthcare professionals. Filter by specialty, availability, language, and ratings to find the perfect match.",
-    },
-    {
-      icon: "💬",
-      title: "Live Consultation",
-      desc: "Choose from video calls, voice calls, or secure messaging based on your needs.",
-    },
-    {
-      icon: "🚨",
-      title: "Red Alert Emergency",
-      desc: "Need urgent help? Use Red Alert to alert the nearest hospital while you're still in the app — when every second matters.",
-    },
-    {
-      icon: "💳",
-      title: "Secure Escrow Payments",
-      desc: "Your money is held safely in escrow. Patients get refunds when things go wrong, and doctors are guaranteed payment for completed sessions. Our policies protect both sides.",
-    },
-    {
-      icon: "🩺",
-      title: "Get Expert Care",
-      desc: "Connect with your doctor from anywhere. Receive professional medical advice, prescriptions, and follow-up care plans.",
-    },
-    {
-      icon: "📋",
-      title: "Track Your Health",
-      desc: "Access your medical records, track symptoms, set medication reminders, and monitor your health journey over time.",
-    },
-  ];
+    icon: "🚨",
+    title: "Red Alert Emergency (Coming Soon)",
+    desc: "We’re building Red Alert — a feature to instantly notify the nearest hospital during emergencies, right from the app.",
+  },
+];
 
   const handleFinish = async () => {
     // Hit an API route to set cookie
