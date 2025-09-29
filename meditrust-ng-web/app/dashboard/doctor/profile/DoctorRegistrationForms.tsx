@@ -336,6 +336,7 @@ const {data,  error } = await supabase.from("profile").upsert(payload).select()
             <option value="University of Benin, Benin City">University of Benin, Benin City</option>
             <option value="Obafemi Awolowo University, Ile-Ife">Obafemi Awolowo University, Ile-Ife</option>
             <option value="University of Ibadan">University of Ibadan</option>
+            <option value="Bowen University">Bowen University</option>
             {/* add more as needed */}
         </select>
         </div>
