@@ -99,8 +99,8 @@ export function ConsultStatusWatcher() {
               // 👇 After 5s, mark as done (card will disappear)
               setTimeout(() => {
                 setStatus("done");
-              }, 5000);
-            }, 10);
+              }, 4000);
+            }, 2000);
               return;
             }
 
