@@ -120,7 +120,7 @@ export default function PatientDashboard() {
 
   } catch (e: any) {
     console.error("Error creating consultation:", e.message);
-    alert("❌ Something went wrong creating your consultation.");
+    //alert("❌ Something went wrong creating your consultation.");
   } finally {
     setLoading(false);
   }
