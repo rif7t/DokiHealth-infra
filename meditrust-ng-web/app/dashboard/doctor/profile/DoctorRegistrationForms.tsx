@@ -167,7 +167,7 @@ const {data,  error } = await supabase.from("profile").upsert(payload).select()
       alert("Failed to save doctor profile");
     } else {
       alert("Doctor profile saved successfully!");
-       //router.replace("/dashboard/doctor");
+       router.replace("/dashboard/doctor");
     }
     
     if(onSuccess && data) onSuccess(data);
