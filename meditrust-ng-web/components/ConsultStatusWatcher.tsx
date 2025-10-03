@@ -100,7 +100,7 @@ export function ConsultStatusWatcher() {
               setTimeout(() => {
                 setStatus("done");
               }, 4000);
-            }, 2000);
+            }, 10);
               return;
             }
 
