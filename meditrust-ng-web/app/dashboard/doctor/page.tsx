@@ -259,6 +259,27 @@ export default function DoctorDashboard() {
       else setGreeting("Good evening");
     };
     updateGreeting();
+
+    const fetchAvailability = async () => {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (!session) return;
+
+    const { data, error } = await supabase
+      .from("profile")
+      .select("is_available")
+      .eq("id", session.user.id)
+      .single();
+
+    if (error) {
+      console.error("Error fetching availability:", error.message);
+    } else {
+      setAvailability(data.is_available);
+    }
+  };
+
+  fetchAvailability();
     const interval = setInterval(updateGreeting, 60 * 1000);
     return () => clearInterval(interval);
   }, []);
