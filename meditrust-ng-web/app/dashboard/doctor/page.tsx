@@ -47,6 +47,7 @@ export default function DoctorDashboard() {
   const audioRef = useRef<HTMLAudioElement | null>(null); 
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const historyRef = useRef<HistoryItem[]>([]);
+  const [prevAssigned, setPrevAssigned] = useState(false);
 
 
   const updateHistory = (newItems: HistoryItem[]) => {
@@ -380,9 +381,11 @@ export default function DoctorDashboard() {
               
               async (payload) => {
                 console.log("Profile Change received!", payload);
-    
+                
                 if (payload.eventType !== "UPDATE") return;
                 const newRow = (payload as any).new;
+                if (!newRow) return;
+
                 const oldRow = (payload as any).old;
                 const isAssigned: boolean | undefined = newRow?.is_assigned;
                 const consultId: string | undefined = newRow?.consult_id;
@@ -390,21 +393,36 @@ export default function DoctorDashboard() {
 
                 if (newRow.id !== session.user.id) return;
 
-
-                setStatus(isAssigned);
-                if (oldRow.is_assigned !== newRow.is_assigned && newRow.is_assigned === true) {
-                  //console.log("Start timer");
+                if (newRow.is_assigned && !prevAssigned) {
+                  
+                  // Doctor just got assigned
+                  setPrevAssigned(true);
                   setIsAssigned(true);
-
                   setShowToast(true);
-                if (!audioRef.current) {
-                  audioRef.current = new Audio("/notifications/consult-notif.mp3");
-                }
-                audioRef.current.play();
+                  if (!audioRef.current) audioRef.current = new Audio("/notifications/consult-notif.mp3");
+                  audioRef.current.play();
 
-                setPendingConsults([newRow]);
-                setTimeout(() => setShowToast(false), 2000);
+                  setPendingConsults([newRow]);
+                  setTimeout(() => setShowToast(false), 2000);
+
+                } else if (!newRow.is_assigned && prevAssigned) {
+                  // Assignment removed
+                  setPrevAssigned(false);
                 }
+                setStatus(isAssigned);
+                // if (oldRow.is_assigned !== newRow.is_assigned && newRow.is_assigned === true) {
+                //   //console.log("Start timer");
+                //   setIsAssigned(true);
+
+                //   setShowToast(true);
+                // if (!audioRef.current) {
+                //   audioRef.current = new Audio("/notifications/consult-notif.mp3");
+                // }
+                // audioRef.current.play();
+
+                // setPendingConsults([newRow]);
+                // setTimeout(() => setShowToast(false), 2000);
+                // }
     
                 // BOTH SIDES: when status is "connecting" and room exists, join (once)
                 if (Boolean(isConnecting)) {
