@@ -393,7 +393,7 @@ export default function DoctorDashboard() {
 
                 if (newRow.id !== session.user.id) return;
 
-                if (newRow.is_assigned && !prevAssigned) {
+                if (newRow.is_assigned && !prevAssigned && !isConnecting) {
                   
                   // Doctor just got assigned
                   setPrevAssigned(true);
@@ -427,6 +427,8 @@ export default function DoctorDashboard() {
                 // BOTH SIDES: when status is "connecting" and room exists, join (once)
                 if (Boolean(isConnecting)) {
                   console.log("Is Connecting is true, ");
+                  if (!audioRef.current) audioRef.current = new Audio("/notifications/consult-notif.mp3");
+                  audioRef.current.play();
                   await joinConsult(consultId);
                   
                   const {error:err} = await supabase.from("profile")
