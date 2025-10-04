@@ -1021,7 +1021,7 @@ console.log("✅ Patient profile loaded:", patientData);
 async function resetProfile(userId: string) {
   await supabase
     .from("profile")
-    .update({ is_assigned: false, consult_id: null, room: null })
+    .update({ is_assigned: false, consult_id: null, room: null, is_connecting: false })
     .eq("id", userId);
 }
 async function setConsult(consultId: string, status: string) {
