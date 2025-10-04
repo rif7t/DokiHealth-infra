@@ -376,6 +376,7 @@ export default function DoctorDashboard() {
             .on(
               "postgres_changes",
               { event: "*", schema: "public", table: "profile",filter: "is_assigned=eq.true" },
+              
               async (payload) => {
                 console.log("Profile Change received!", payload);
     
@@ -385,6 +386,9 @@ export default function DoctorDashboard() {
                 const isAssigned: boolean | undefined = newRow?.is_assigned;
                 const consultId: string | undefined = newRow?.consult_id;
                 const isConnecting: boolean | undefined = newRow?.is_connecting;
+
+                if (newRow.id !== session.user.id) return;
+
 
                 setStatus(isAssigned);
                 if (oldRow.is_assigned !== newRow.is_assigned && newRow.is_assigned === true) {
