@@ -89,12 +89,33 @@ function PatientCallInner() {
       }
 
       if (consult?.doctor_id) {
-        const { data: doc } = await supabase
-          .from("profile")
-          .select("first_name, last_name, specialty")
-          .eq("id", consult.doctor_id)
-          .maybeSingle();
-        setDoctorProfile(doc);
+        const { data, error } = await supabase
+      .from("consult")
+      .select(`
+        id,
+        doctor:profile!consult_doctor_id_fkey (
+          id,
+          first_name,
+          last_name,
+          specialty
+        )
+      `)
+      .eq("id", consultId)
+      .single();
+
+    if (error) {
+      console.error("Error loading doctor info:", error.message);
+      return;
+    }
+
+    setDoctorProfile(data?.doctor || null);
+
+        // const { data: doc } = await supabase
+        //   .from("profile")
+        //   .select("first_name, last_name, specialty")
+        //   .eq("id", consult.doctor_id)
+        //   .maybeSingle();
+        // setDoctorProfile(doc);
       }
     })();
   }, [consultId]);
