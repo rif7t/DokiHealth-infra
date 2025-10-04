@@ -393,23 +393,42 @@ export default function DoctorDashboard() {
 
                 if (newRow.id !== session.user.id) return;
 
-                if (newRow.is_assigned && !prevAssigned && !isConnecting) {
+                // if (newRow.is_assigned && !prevAssigned && !isConnecting) {
                   
-                  // Doctor just got assigned
-                  setPrevAssigned(true);
-                  setIsAssigned(true);
-                  setShowToast(true);
-                  if (!audioRef.current) audioRef.current = new Audio("/notifications/consult-notif.mp3");
-                  audioRef.current.play();
+                //   // Doctor just got assigned
+                //   setPrevAssigned(true);
+                //   setIsAssigned(true);
+                //   setShowToast(true);
+                //   if (!audioRef.current) audioRef.current = new Audio("/notifications/consult-notif.mp3");
+                //   audioRef.current.play();
 
-                  setPendingConsults([newRow]);
-                  setTimeout(() => setShowToast(false), 2000);
+                //   setPendingConsults([newRow]);
+                //   setTimeout(() => setShowToast(false), 2000);
 
-                } else if (!newRow.is_assigned && prevAssigned) {
-                  // Assignment removed
-                  setPrevAssigned(false);
-                }
-                setStatus(isAssigned);
+                // } else if (!newRow.is_assigned && prevAssigned) {
+                //   // Assignment removed
+                //   setPrevAssigned(false);
+                // }
+                // setStatus(isAssigned);
+                const prevAssignedRef = useRef(false);
+
+                const handleRealtime = (newRow: any) => {
+                  if (newRow.id !== session.user.id) return; // only current doctor
+
+                  // Only trigger when is_assigned flips false -> true
+                  const justAssigned = newRow.is_assigned && !prevAssignedRef.current;
+
+                  // Update ref for next payload
+                  prevAssignedRef.current = newRow.is_assigned;
+
+                  if (justAssigned) {
+                    setIsAssigned(true);
+                    setShowToast(true);
+                    if (!audioRef.current) audioRef.current = new Audio("/notifications/consult-notif.mp3");
+                    audioRef.current.play();
+                    setPendingConsults([newRow]);
+                    setTimeout(() => setShowToast(false), 2000);
+                  }
                 // if (oldRow.is_assigned !== newRow.is_assigned && newRow.is_assigned === true) {
                 //   //console.log("Start timer");
                 //   setIsAssigned(true);
