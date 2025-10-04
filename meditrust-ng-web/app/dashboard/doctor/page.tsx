@@ -445,41 +445,57 @@ export default function DoctorDashboard() {
                 //   }
                 // }
 
-                const prevAssignedRef = useRef(false);
+                const lastAssignedConsult = useRef<string | null>(null);
 
-                const handleRealtime = (newRow: any) => {
-                if (newRow.id !== session.user.id) return;
+            const handleRealtime = async (newRow: any) => {
+              if (newRow.id !== session.user.id) return; // only react for this doctor
 
-                // Only trigger when is_assigned flips false -> true
-                const justAssigned = newRow.is_assigned && !prevAssignedRef.current;
+              const isAssigned = Boolean(newRow.is_assigned);
+              const consultId = newRow.consult_id;
 
-                if (justAssigned) {
-                  setIsAssigned(true);
-                  setShowToast(true);
-                  if (!audioRef.current) audioRef.current = new Audio("/notifications/consult-notif.mp3");
-                  audioRef.current.play();
-                  setPendingConsults([newRow]);
-                  setTimeout(() => setShowToast(false), 2000);
+              // Trigger notification only for a new consult assignment
+              const justAssigned = isAssigned && consultId && lastAssignedConsult.current !== consultId;
+
+              if (justAssigned) {
+                lastAssignedConsult.current = consultId;
+
+                setIsAssigned(true);
+                setPendingConsults([newRow]);
+                setShowToast(true);
+
+                if (!audioRef.current) {
+                  audioRef.current = new Audio("/notifications/consult-notif.mp3");
                 }
+                audioRef.current.play();
 
-                // Update ref AFTER triggering
-                prevAssignedRef.current = newRow.is_assigned;
+                setTimeout(() => setShowToast(false), 2000);
+              }
 
-                // Reset prevAssignedRef when assignment ends
-                if (!newRow.is_assigned) {
-                  prevAssignedRef.current = false;
-                }
+              // Reset the last assigned consult when doctor is no longer assigned
+              if (!isAssigned) {
+                lastAssignedConsult.current = null;
+                setIsAssigned(false);
+              }
 
-                if (newRow.is_connecting) {
-                  joinConsult(newRow.consult_id);
-                  supabase.from("profile").update({
-                    is_connecting: false,
-                    is_assigned: false,
-                    consult_id: null,
-                    room: null,
-                  }).eq("id", session.user.id);
-                }
-              };
+              // Handle connecting to the consult
+              if (newRow.is_connecting && consultId) {
+                await joinConsult(consultId);
+
+                const { error } = await supabase.from("profile").update({
+                  is_connecting: false,
+                  is_assigned: false,
+                  consult_id: null,
+                  room: null,
+                }).eq("id", session.user.id);
+
+                if (error) console.error("Failed to reset is_connecting:", error.message);
+
+                // Also clear last assigned consult after joining
+                lastAssignedConsult.current = null;
+                setIsAssigned(false);
+              }
+            };
+
 
               }
             );
