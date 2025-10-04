@@ -448,33 +448,38 @@ export default function DoctorDashboard() {
                 const prevAssignedRef = useRef(false);
 
                 const handleRealtime = (newRow: any) => {
-                  if (newRow.id !== session.user.id) return; // only current doctor
+                if (newRow.id !== session.user.id) return;
 
-                  // Only trigger when is_assigned flips false -> true
-                  const justAssigned = newRow.is_assigned && !prevAssignedRef.current;
+                // Only trigger when is_assigned flips false -> true
+                const justAssigned = newRow.is_assigned && !prevAssignedRef.current;
 
-                  // Update ref for next payload
-                  prevAssignedRef.current = newRow.is_assigned;
+                if (justAssigned) {
+                  setIsAssigned(true);
+                  setShowToast(true);
+                  if (!audioRef.current) audioRef.current = new Audio("/notifications/consult-notif.mp3");
+                  audioRef.current.play();
+                  setPendingConsults([newRow]);
+                  setTimeout(() => setShowToast(false), 2000);
+                }
 
-                  if (justAssigned) {
-                    setIsAssigned(true);
-                    setShowToast(true);
-                    if (!audioRef.current) audioRef.current = new Audio("/notifications/consult-notif.mp3");
-                    audioRef.current.play();
-                    setPendingConsults([newRow]);
-                    setTimeout(() => setShowToast(false), 2000);
-                  }
+                // Update ref AFTER triggering
+                prevAssignedRef.current = newRow.is_assigned;
 
-                  if (newRow.is_connecting) {
-                    joinConsult(newRow.consult_id);
-                    supabase.from("profile").update({
-                      is_connecting: false,
-                      is_assigned: false,
-                      consult_id: null,
-                      room: null,
-                    }).eq("id", session.user.id);
-                  }
-                };
+                // Reset prevAssignedRef when assignment ends
+                if (!newRow.is_assigned) {
+                  prevAssignedRef.current = false;
+                }
+
+                if (newRow.is_connecting) {
+                  joinConsult(newRow.consult_id);
+                  supabase.from("profile").update({
+                    is_connecting: false,
+                    is_assigned: false,
+                    consult_id: null,
+                    room: null,
+                  }).eq("id", session.user.id);
+                }
+              };
 
               }
             );
