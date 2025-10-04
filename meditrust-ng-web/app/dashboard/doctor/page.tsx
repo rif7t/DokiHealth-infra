@@ -393,110 +393,52 @@ export default function DoctorDashboard() {
 
                 if (newRow.id !== session.user.id) return;
 
-                // if (newRow.is_assigned && !prevAssigned && !isConnecting) {
+                if (newRow.is_assigned && !prevAssigned) {
                   
-                //   // Doctor just got assigned
-                //   setPrevAssigned(true);
-                //   setIsAssigned(true);
-                //   setShowToast(true);
-                //   if (!audioRef.current) audioRef.current = new Audio("/notifications/consult-notif.mp3");
-                //   audioRef.current.play();
+                  // Doctor just got assigned
+                  setPrevAssigned(true);
+                  setIsAssigned(true);
+                  setShowToast(true);
+                  if (!audioRef.current) audioRef.current = new Audio("/notifications/consult-notif.mp3");
+                  audioRef.current.play();
 
-                //   setPendingConsults([newRow]);
-                //   setTimeout(() => setShowToast(false), 2000);
-
-                // } else if (!newRow.is_assigned && prevAssigned) {
-                //   // Assignment removed
-                //   setPrevAssigned(false);
-                // }
-                // setStatus(isAssigned);
-                
-                // if (oldRow.is_assigned !== newRow.is_assigned && newRow.is_assigned === true) {
-                //   //console.log("Start timer");
-                //   setIsAssigned(true);
-
-                //   setShowToast(true);
-                // if (!audioRef.current) {
-                //   audioRef.current = new Audio("/notifications/consult-notif.mp3");
-                // }
-                // audioRef.current.play();
-
-                // setPendingConsults([newRow]);
-                // setTimeout(() => setShowToast(false), 2000);
-                // }
-    
-                // BOTH SIDES: when status is "connecting" and room exists, join (once)
-                // if (Boolean(isConnecting)) {
-                //   console.log("Is Connecting is true, ");
-                //   if (!audioRef.current) audioRef.current = new Audio("/notifications/consult-notif.mp3");
-                //   audioRef.current.play();
-                //   await joinConsult(consultId);
                   
-                //   const {error:err} = await supabase.from("profile")
-                //   .update({is_connecting: false,
-                //     is_assigned: false,
-                //     consult_id: null,
-                //     room: null,
-                //   })
-                //   .eq("id", session.user.id);
+                } else if (!newRow.is_assigned && prevAssigned) {
+                  // Assignment removed
+                  setPrevAssigned(false);
+                }
+                setStatus(isAssigned);
+                if (oldRow.is_assigned !== newRow.is_assigned && newRow.is_assigned === true) {
+                  //console.log("Start timer");
+                  setIsAssigned(true);
 
-                //   if(err){
-                //     console.error("User failed to reset is_connecting");
-                //   }
-                // }
-
-                const lastAssignedConsult = useRef<string | null>(null);
-
-            const handleRealtime = async (newRow: any) => {
-              if (newRow.id !== session.user.id) return; // only react for this doctor
-
-              const isAssigned = Boolean(newRow.is_assigned);
-              const consultId = newRow.consult_id;
-
-              // Trigger notification only for a new consult assignment
-              const justAssigned = isAssigned && consultId && lastAssignedConsult.current !== consultId;
-
-              if (justAssigned) {
-                lastAssignedConsult.current = consultId;
-
-                setIsAssigned(true);
-                setPendingConsults([newRow]);
-                setShowToast(true);
-
+                  setShowToast(true);
                 if (!audioRef.current) {
                   audioRef.current = new Audio("/notifications/consult-notif.mp3");
                 }
                 audioRef.current.play();
 
+                setPendingConsults([newRow]);
                 setTimeout(() => setShowToast(false), 2000);
-              }
+                }
+    
+                // BOTH SIDES: when status is "connecting" and room exists, join (once)
+                if (Boolean(isConnecting)) {
+                  console.log("Is Connecting is true, ");
+                  await joinConsult(consultId);
+                  
+                  const {error:err} = await supabase.from("profile")
+                  .update({is_connecting: false,
+                    is_assigned: false,
+                    consult_id: null,
+                    room: null,
+                  })
+                  .eq("id", session.user.id);
 
-              // Reset the last assigned consult when doctor is no longer assigned
-              if (!isAssigned) {
-                lastAssignedConsult.current = null;
-                setIsAssigned(false);
-              }
-
-              // Handle connecting to the consult
-              if (newRow.is_connecting && consultId) {
-                await joinConsult(consultId);
-
-                const { error } = await supabase.from("profile").update({
-                  is_connecting: false,
-                  is_assigned: false,
-                  consult_id: null,
-                  room: null,
-                }).eq("id", session.user.id);
-
-                if (error) console.error("Failed to reset is_connecting:", error.message);
-
-                // Also clear last assigned consult after joining
-                lastAssignedConsult.current = null;
-                setIsAssigned(false);
-              }
-            };
-
-
+                  if(err){
+                    console.error("User failed to reset is_connecting");
+                  }
+                }
               }
             );
     
