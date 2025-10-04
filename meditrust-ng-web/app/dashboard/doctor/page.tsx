@@ -370,7 +370,8 @@ export default function DoctorDashboard() {
           supabase.realtime.setAuth(session?.access_token ?? "");
     
           if (chRef.current) supabase.removeChannel(chRef.current);
-    
+           if (!session?.user?.id) return;
+
           const ch = supabase
             .channel("profile-realtime")
             .on(
