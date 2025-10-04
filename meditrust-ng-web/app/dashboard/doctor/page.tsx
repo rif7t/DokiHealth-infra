@@ -410,6 +410,41 @@ export default function DoctorDashboard() {
                 //   setPrevAssigned(false);
                 // }
                 // setStatus(isAssigned);
+                
+                // if (oldRow.is_assigned !== newRow.is_assigned && newRow.is_assigned === true) {
+                //   //console.log("Start timer");
+                //   setIsAssigned(true);
+
+                //   setShowToast(true);
+                // if (!audioRef.current) {
+                //   audioRef.current = new Audio("/notifications/consult-notif.mp3");
+                // }
+                // audioRef.current.play();
+
+                // setPendingConsults([newRow]);
+                // setTimeout(() => setShowToast(false), 2000);
+                // }
+    
+                // BOTH SIDES: when status is "connecting" and room exists, join (once)
+                // if (Boolean(isConnecting)) {
+                //   console.log("Is Connecting is true, ");
+                //   if (!audioRef.current) audioRef.current = new Audio("/notifications/consult-notif.mp3");
+                //   audioRef.current.play();
+                //   await joinConsult(consultId);
+                  
+                //   const {error:err} = await supabase.from("profile")
+                //   .update({is_connecting: false,
+                //     is_assigned: false,
+                //     consult_id: null,
+                //     room: null,
+                //   })
+                //   .eq("id", session.user.id);
+
+                //   if(err){
+                //     console.error("User failed to reset is_connecting");
+                //   }
+                // }
+
                 const prevAssignedRef = useRef(false);
 
                 const handleRealtime = (newRow: any) => {
@@ -429,39 +464,18 @@ export default function DoctorDashboard() {
                     setPendingConsults([newRow]);
                     setTimeout(() => setShowToast(false), 2000);
                   }
-                // if (oldRow.is_assigned !== newRow.is_assigned && newRow.is_assigned === true) {
-                //   //console.log("Start timer");
-                //   setIsAssigned(true);
 
-                //   setShowToast(true);
-                // if (!audioRef.current) {
-                //   audioRef.current = new Audio("/notifications/consult-notif.mp3");
-                // }
-                // audioRef.current.play();
-
-                // setPendingConsults([newRow]);
-                // setTimeout(() => setShowToast(false), 2000);
-                // }
-    
-                // BOTH SIDES: when status is "connecting" and room exists, join (once)
-                if (Boolean(isConnecting)) {
-                  console.log("Is Connecting is true, ");
-                  if (!audioRef.current) audioRef.current = new Audio("/notifications/consult-notif.mp3");
-                  audioRef.current.play();
-                  await joinConsult(consultId);
-                  
-                  const {error:err} = await supabase.from("profile")
-                  .update({is_connecting: false,
-                    is_assigned: false,
-                    consult_id: null,
-                    room: null,
-                  })
-                  .eq("id", session.user.id);
-
-                  if(err){
-                    console.error("User failed to reset is_connecting");
+                  if (newRow.is_connecting) {
+                    joinConsult(newRow.consult_id);
+                    supabase.from("profile").update({
+                      is_connecting: false,
+                      is_assigned: false,
+                      consult_id: null,
+                      room: null,
+                    }).eq("id", session.user.id);
                   }
-                }
+                };
+
               }
             );
     
