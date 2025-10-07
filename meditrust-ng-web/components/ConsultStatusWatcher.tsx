@@ -135,7 +135,7 @@ export function ConsultStatusWatcher() {
 
   return (
   <KeyboardDismissWrapper>
-    {status && status !== "done" ? (
+    {status && status !== "done" && status !== "ended" ? (
   <div className="fixed inset-0 flex items-center justify-center z-50">
     <Card className="shadow-2xl rounded-xl border border-blue-200 bg-white w-90">
       <CardContent className="flex flex-col items-center justify-center p-6">

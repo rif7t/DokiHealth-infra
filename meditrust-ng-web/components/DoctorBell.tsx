@@ -13,9 +13,56 @@ export default function DoctorBell({ pendingConsults, setPendingConsults }) {
   const [watching, setWatching] = useState(false);
   const [activeConsultId, setActiveConsultId] = useState<string | null>(null);
   const [loadingConsults, setLoadingConsults] = useState(false);
+  const [persistentPulse, setPersistentPulse] = useState(false);
+
 
   const popupRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+
+  useEffect(() => {
+  if (open) {
+    setPersistentPulse(false);
+  }
+}, [open]);
+
+  useEffect(() => {
+  const initPendingConsult = async () => {
+    const { data: user } = await supabase.auth.getUser();
+    if (!user?.user) return;
+
+    setUserid(user.user.id);
+
+    // Fetch the first pending consult for this doctor
+    const { data, error } = await supabase
+      .from("consult")
+      .select("*")
+      .eq("doctor_id", user.user.id)
+      .in("status", ["requested"])
+      .order("requested_at", { ascending: true })
+      .limit(1);
+
+    if (!error && data?.length) {
+      setPendingConsults(data);
+      setPersistentPulse(true); // start bell pulse if pending consult exists
+    }
+  };
+
+  initPendingConsult();
+}, []);
+
+
+  useEffect(() => {
+  if (pendingConsults.length > 0) {
+    setPersistentPulse(true); // start pulse when there’s a pending consult
+  } else {
+    setPersistentPulse(false); // stop pulse if none
+  }
+}, [pendingConsults]);
+
+useEffect(() => {
+  if (open) setPersistentPulse(false);
+}, [open]);
+
 
   // --- Close popup when clicking outside or pressing Escape ---
   useEffect(() => {
@@ -164,9 +211,15 @@ export default function DoctorBell({ pendingConsults, setPendingConsults }) {
  return (
   <div className="relative">
     {/* 🔔 Bell button */}
-    <button
+    <motion.button
       onClick={() => setOpen((prev) => !prev)}
       className="relative text-2xl"
+      animate={persistentPulse ? { scale: [1, 1.2, 1] } : {}}
+  transition={{
+    duration: 0.6,
+    ease: "easeOut",
+    repeat: persistentPulse ? Infinity : 0,
+  }}
     >
       🔔
       {pendingConsults.length > 0 && (
@@ -174,7 +227,7 @@ export default function DoctorBell({ pendingConsults, setPendingConsults }) {
           {1}
         </span>
       )}
-    </button>
+    </motion.button>
 
     {/* Popup */}
     <AnimatePresence>
