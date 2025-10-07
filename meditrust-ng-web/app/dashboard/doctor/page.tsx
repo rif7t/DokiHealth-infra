@@ -386,18 +386,35 @@ export default function DoctorDashboard() {
                 
                 if (payload.eventType !== "UPDATE") return;
                 const newRow = (payload as any).new;
-                if (!newRow) return;
                 
 
                 const oldRow = (payload as any).old;
                 if(!oldRow || !newRow) return;
-                if(oldRow.is_assigned === newRow.is_assigned) return;
+                //if(oldRow.is_assigned === newRow.is_assigned) return;
 
                 const isAssigned: boolean | undefined = newRow?.is_assigned;
                 const consultId: string | undefined = newRow?.consult_id;
                 const isConnecting: boolean | undefined = newRow?.is_connecting;
 
                 if (newRow.id !== session.user.id) return;
+
+                   // BOTH SIDES: when status is "connecting" and room exists, join (once)
+                if (oldRow.is_connecting === "false" && newRow.is_connecting === "true") {
+                  console.log("Is Connecting is true, ");
+                  await joinConsult(consultId);
+                  
+                  const {error:err} = await supabase.from("profile")
+                  .update({is_connecting: false,
+                    is_assigned: false,
+                    consult_id: null,
+                    room: null,
+                  })
+                  .eq("id", session.user.id);
+
+                  if(err){
+                    console.error("User failed to reset is_connecting");
+                  }
+                }
 
                 if (oldRow.is_assigned === false && newRow.is_assigned === true) {
                   
@@ -419,24 +436,6 @@ export default function DoctorDashboard() {
                 if (oldRow.is_assigned !== newRow.is_assigned && newRow.is_assigned === true) {
                   //console.log("Start timer");
                   setIsAssigned(true);
-                }
-    
-                // BOTH SIDES: when status is "connecting" and room exists, join (once)
-                if (Boolean(isConnecting)) {
-                  console.log("Is Connecting is true, ");
-                  await joinConsult(consultId);
-                  
-                  const {error:err} = await supabase.from("profile")
-                  .update({is_connecting: false,
-                    is_assigned: false,
-                    consult_id: null,
-                    room: null,
-                  })
-                  .eq("id", session.user.id);
-
-                  if(err){
-                    console.error("User failed to reset is_connecting");
-                  }
                 }
               }
             );
