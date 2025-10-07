@@ -395,12 +395,13 @@ export default function DoctorDashboard() {
                 const isAssigned: boolean | undefined = newRow?.is_assigned;
                 const consultId: string | undefined = newRow?.consult_id;
                 const isConnecting: boolean | undefined = newRow?.is_connecting;
+                
 
                 if (newRow.id !== session.user.id) return;
 
                    // BOTH SIDES: when status is "connecting" and room exists, join (once)
-                if (oldRow.is_connecting === "false" && newRow.is_connecting === "true") {
-                  console.log("Is Connecting is true, ");
+                if (oldRow.is_connecting === false && newRow.is_connecting === true) {
+                  console.log("Is Connecting is true, CONNECTING ");
                   await joinConsult(consultId);
                   
                   const {error:err} = await supabase.from("profile")

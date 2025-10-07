@@ -409,7 +409,7 @@ console.log("✅ Patient profile loaded:", patientData);
       alert("Failed to save validation");
       return;
     }
-    alert("✅ Consultation completed!");
+    //alert("✅ Consultation completed!");
     setShowValidationPopup(false);
 
     cleanup();
