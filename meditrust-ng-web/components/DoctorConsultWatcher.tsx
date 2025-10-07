@@ -6,13 +6,23 @@ import { supabase } from "@/lib/supabaseClient";
 type Props = {
   consultId: string;
   doctorId: string;
+  isAssigned?:boolean;
   onUnmount?: (reason: "ended" | "unassigned" | "error") => void;
 };
 
-export default function DoctorConsultWatcher({ consultId, doctorId, onUnmount }: Props) {
+export default function DoctorConsultWatcher({ consultId, doctorId, isAssigned=true, onUnmount }: Props) {
   const [status, setStatus] = useState<
     "watching" | "ended" | "unassigned" | "error"
   >("watching");
+
+   useEffect(() => {
+    
+    if (!isAssigned) {
+      console.log(" Doctor unassigned — stopping watcher");
+      setStatus("unassigned");
+      onUnmount?.("unassigned");
+    }
+  }, [isAssigned, onUnmount]);
 
   useEffect(() => {
     let cancelled = false;
