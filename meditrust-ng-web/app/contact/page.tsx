@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
+import { Suspense, useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
-import { useState, useEffect } from "react";
 
-export default function ContactPage() {
+function ContactForm() {
   const searchParams = useSearchParams();
   const type = searchParams.get("type");
 
@@ -32,26 +32,22 @@ export default function ContactPage() {
   };
 
   const handleSubmit = async (e) => {
-  e.preventDefault();
-  const formData = new FormData(e.target);
+    e.preventDefault();
+    const formData = new FormData(e.target);
 
-  const response = await fetch("https://formspree.io/f/xjkaabwb", {
-    method: "POST",
-    body: formData,
-    headers: {
-      Accept: "application/json",
-    },
-  });
+    const response = await fetch("https://formspree.io/f/xjkaabwb", {
+      method: "POST",
+      body: formData,
+      headers: { Accept: "application/json" },
+    });
 
-  if (response.ok) {
-    alert("Message sent! We'll get back to you soon.");
-    e.target.reset();
-  } else {
-    alert("Oops! Something went wrong. Please try again later.");
-  }
-};
-
-
+    if (response.ok) {
+      alert("Message sent! We'll get back to you soon.");
+      e.target.reset();
+    } else {
+      alert("Oops! Something went wrong. Please try again later.");
+    }
+  };
 
   const headers = {
     demo: "Request a Demo",
@@ -122,5 +118,13 @@ export default function ContactPage() {
         </a>
       </div>
     </div>
+  );
+}
+
+export default function ContactPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center h-screen">Loading...</div>}>
+      <ContactForm />
+    </Suspense>
   );
 }
