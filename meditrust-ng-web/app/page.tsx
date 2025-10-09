@@ -50,9 +50,9 @@ export default function OnboardingPage() {
 ];
 
   const handleFinish = async () => {
-    // Hit an API route to set cookie
+    // set cookie
     await fetch("/api/seen-onboarding", { method: "POST" });
-    router.replace("/sign-in"); // or wherever your next step is
+    router.replace("/sign-in"); 
   };
 
   return (
@@ -146,10 +146,12 @@ export default function OnboardingPage() {
             >
               Get Started Now
             </button>
-            <button className="w-full sm:flex-1 px-6 py-3 sm:py-4 rounded-full border-2 border-blue-500 
+            <button
+            onClick={() => router.push("/for-hospitals")}
+            className="w-full sm:flex-1 px-6 py-3 sm:py-4 rounded-full border-2 border-blue-500 
                              text-blue-600 font-semibold hover:bg-blue-500 hover:text-white 
                              transition-colors duration-200 text-sm sm:text-base">
-              Learn More
+              For Hospitals
             </button>
           </div>
         </div>

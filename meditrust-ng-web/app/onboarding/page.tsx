@@ -126,8 +126,10 @@ export default function OnboardingPage() {
       >
         Get Started Now
       </button>
-      <button className="w-full sm:w-auto px-6 py-3 rounded-full border-2 border-blue-500 text-blue-600 font-semibold hover:bg-blue-500 hover:text-white transition">
-        Learn More
+      <button
+      onClick={() => router.push("/for-hospitals")}
+       className="w-full sm:w-auto px-6 py-3 rounded-full border-2 border-blue-500 text-blue-600 font-semibold hover:bg-blue-500 hover:text-white transition">
+        For Hospitals
       </button>
     </div>
 
