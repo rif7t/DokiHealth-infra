@@ -1,0 +1,24 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "AllowBasicECSTasks",
+      "Effect": "Allow",
+      "Action": [
+        "ecs:DescribeTasks",
+        "ecs:ListTasks",
+        "ecs:ListClusters"
+      ],
+      "Resource": "*"
+    },
+    {
+      "Sid": "AllowCloudWatchLogs",
+      "Effect": "Allow",
+      "Action": [
+        "logs:CreateLogStream",
+        "logs:PutLogEvents"
+      ],
+      "Resource": "*"
+    }
+  ]
+}
