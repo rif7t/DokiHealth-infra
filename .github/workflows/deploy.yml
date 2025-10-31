@@ -40,7 +40,11 @@ jobs:
           PAYSTACK_SECRET_KEY: ${{secrets.PAYSTACK_SECRET_KEY}}
           SUPABASE_SERVICE_ROLE_KEY: ${{secrets.SUPABASE_SERVICE_ROLE_KEY}}
           
-        run: docker compose build 
+        run: |
+          docker compose -f docker-compose.yml build \
+            --build-arg NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL} \
+            --build-arg NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+
         
       - name: push to ECR registry
         run: docker compose push
