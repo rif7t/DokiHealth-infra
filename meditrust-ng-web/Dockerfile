@@ -1,11 +1,11 @@
 FROM node:18-alpine AS builder
 
-WORKDIR DokiHealth-infra/meditrust-ng-web
+WORKDIR /app
 
-COPY package*.json ./
+COPY DokiHealth-infra/meditrust-ng-web/package*.json ./
 RUN npm install
 
-COPY . .
+COPY DokiHealth-infra/meditrust-ng-web .
 
 ARG NEXT_PUBLIC_SUPABASE_URL
 ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
