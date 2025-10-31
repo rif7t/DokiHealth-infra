@@ -5,8 +5,8 @@ services:
       context: .
       dockerfile: meditrust-ng-web/Dockerfile
       args:
-        NEXT_PUBLIC_SUPABASE_URL: https://www.dokihealth.com
-        NEXT_PUBLIC_SUPABASE_ANON_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlncWZ0d256cWN1eWtudHBiY25wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYyMjI1MDgsImV4cCI6MjA3MTc5ODUwOH0.DNbyUStgzBhyBhMP-5eNj0HQRCHb0tUHPPAUtEqagDE
+        NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
     image: dokihealth:latest
     ports:
       - "3000:3000"
