@@ -1,6 +1,6 @@
 FROM node:18-alpine AS builder
 
-WORKDIR /app
+WORKDIR /meditrust-ng-web/app
 
 COPY package*.json ./
 RUN npm install
