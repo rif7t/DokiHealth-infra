@@ -29,7 +29,17 @@ jobs:
           ECR_REGISTRY: $
           ECR_REPOSITORY: dokihealth-b2c
           IMAGE_TAG: latest
-      
+          NEXT_PUBLIC_SUPABASE_URL: ${{secrets.NEXT_PUBLIC_SUPABASE_URL}}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY}}
+          NEXT_PUBLIC_PUBLISHABLE_KEY: ${{secrets.NEXT_PUBLIC_PUBLISHABLE_KEY}} 
+          NEXT_PUBLIC_APP_URL: ${{secrets.NEXT_PUBLIC_APP_URL}}
+          NEXT_PUBLIC_PAYSTACK_MODE: ${{secrets.NEXT_PUBLIC_PAYSTACK_MODE}}
+          TWILIO_ACCOUNT_SID: ${{secrets.TWILIO_ACCOUNT_SID}}
+          TWILIO_API_KEY_SID: ${{secrets.TWILIO_API_KEY_SID}}
+          TWILIO_API_KEY_SECRET: ${{secrets.TWILIO_API_KEY_SECRET}}
+          PAYSTACK_SECRET_KEY: ${{secrets.PAYSTACK_SECRET_KEY}}
+          SUPABASE_SERVICE_ROLE_KEY: ${{secrets.SUPABASE_SERVICE_ROLE_KEY}}
+          
         run: 
           docker compose build
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
