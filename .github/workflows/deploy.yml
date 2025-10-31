@@ -7,7 +7,7 @@ on:
 jobs:
   build:
     name: Build Image
-    runs-on: node:18-alpine
+    runs-on: ubuntu-latest
     steps:
       - name: Check out code
         uses: actions/checkout@v2
