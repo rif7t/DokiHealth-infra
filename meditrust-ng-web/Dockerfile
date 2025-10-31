@@ -1,6 +1,6 @@
 FROM node:18-alpine AS builder
 
-WORKDIR /meditrust-ng-web/app
+WORKDIR /meditrust-ng-web
 
 COPY package*.json ./
 RUN npm install
@@ -17,14 +17,14 @@ RUN npm run build && ls -la .next
 
 FROM node:18-alpine as runner
 
-WORKDIR /meditrust-ng-web/app
+WORKDIR /meditrust-ng-web
 
-COPY --from=builder /meditrust-ng-web/app/package.json ./
-COPY --from=builder /meditrust-ng-web/app/next.config.js ./
-COPY --from=builder /meditrust-ng-web/app/public ./public
-COPY --from=builder /meditrust-ng-web/app/node_modules ./node_modules
-COPY --from=builder /meditrust-ng-web/app/.next ./.next
-COPY --from=builder /meditrust-ng-web/app/next.config.js ./
+COPY --from=builder /meditrust-ng-web/package.json ./
+COPY --from=builder /meditrust-ng-web/next.config.js ./
+COPY --from=builder /meditrust-ng-web/public ./public
+COPY --from=builder /meditrust-ng-web/node_modules ./node_modules
+COPY --from=builder /meditrust-ng-web/.next ./.next
+COPY --from=builder /meditrust-ng-web/next.config.js ./
 
 EXPOSE 3000
 
