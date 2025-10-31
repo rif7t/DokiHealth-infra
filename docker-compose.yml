@@ -2,8 +2,8 @@
 services:
   web:
     build: 
-      context: meditrust-ng-web
-      dockerfile: meditrust-ng-web/Dockerfile
+      context: .
+      dockerfile: Dockerfile
       args:
         NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL}
         NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY}
