@@ -40,7 +40,8 @@ jobs:
           PAYSTACK_SECRET_KEY: ${{secrets.PAYSTACK_SECRET_KEY}}
           SUPABASE_SERVICE_ROLE_KEY: ${{secrets.SUPABASE_SERVICE_ROLE_KEY}}
           
-        run: 
-          docker compose build
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+        run: docker-compose up -d
+
+      - name: push to ECR registry
+        run: docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
         
