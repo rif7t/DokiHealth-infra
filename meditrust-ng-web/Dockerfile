@@ -6,7 +6,7 @@ WORKDIR /app
 COPY meditrust-ng-web/package*.json ./
 RUN npm install
 
-COPY meditrust-ng-web ./
+COPY meditrust-ng-web .
 
 # Declare build args (for docker-compose or CI)
 ARG NEXT_PUBLIC_SUPABASE_URL
@@ -16,7 +16,8 @@ ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
 ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL
 ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-RUN npm run build
+RUN echo "Building with URL: $NEXT_PUBLIC_SUPABASE_URL" && \
+    npm run build && ls -la .next
 
 FROM node:20-alpine AS runner
 
@@ -28,7 +29,6 @@ COPY --from=builder /app/public ./public
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/.next ./.next
 
-# Optional runtime envs (used by Next.js server components)
 ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL
 ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
 
