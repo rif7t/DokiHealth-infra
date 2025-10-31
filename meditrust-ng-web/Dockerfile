@@ -1,6 +1,6 @@
 FROM node:18-alpine AS builder
 
-WORKDIR .
+WORKDIR DokiHealth-infra/meditrust-ng-web
 
 COPY package*.json ./
 RUN npm install
