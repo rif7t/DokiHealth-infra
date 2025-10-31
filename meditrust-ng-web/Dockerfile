@@ -26,6 +26,9 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/next.config.js ./
 
+ENV NEXT_PUBLIC_SUPABASE_URL="https://ygqftwnzqcuykntpbcnp.supabase.co"
+ENV NEXT_PUBLIC_SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlncWZ0d256cWN1eWtudHBiY25wIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYyMjI1MDgsImV4cCI6MjA3MTc5ODUwOH0.DNbyUStgzBhyBhMP-5eNj0HQRCHb0tUHPPAUtEqagDE"
+
 EXPOSE 3000
 
 CMD ["npm", "start"]
