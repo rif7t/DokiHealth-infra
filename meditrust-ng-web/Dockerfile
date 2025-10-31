@@ -17,14 +17,14 @@ RUN npm run build && ls -la .next
 
 FROM node:18-alpine as runner
 
-WORKDIR /app
+WORKDIR /meditrust-ng-web/app
 
-COPY --from=builder /app/package.json ./
-COPY --from=builder /app/next.config.js ./
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/.next ./.next
-COPY --from=builder /app/next.config.js ./
+COPY --from=builder /meditrust-ng-web/app/package.json ./
+COPY --from=builder /meditrust-ng-web/app/next.config.js ./
+COPY --from=builder /meditrust-ng-web/app/public ./public
+COPY --from=builder /meditrust-ng-web/app/node_modules ./node_modules
+COPY --from=builder /meditrust-ng-web/app/.next ./.next
+COPY --from=builder /meditrust-ng-web/app/next.config.js ./
 
 EXPOSE 3000
 
