@@ -17,14 +17,14 @@ RUN npm run build && ls -la .next
 
 FROM node:18-alpine as runner
 
-WORKDIR .
+WORKDIR /app
 
-COPY --from=builder ./package.json ./
-COPY --from=builder ./next.config.js ./
-COPY --from=builder ./public ./public
-COPY --from=builder ./node_modules ./node_modules
-COPY --from=builder ./.next ./.next
-COPY --from=builder ./next.config.js ./
+COPY --from=builder /app/package.json ./
+COPY --from=builder /app/next.config.js ./
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/next.config.js ./
 
 EXPOSE 3000
 
