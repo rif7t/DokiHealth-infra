@@ -41,7 +41,7 @@ jobs:
       
       - name: Build, tag and push docker image to AWS ECR
         env:
-          REGISTRY: ${{123507875554.dkr.ecr.eu-north-1.amazonaws.com}}
+          REGISTRY: 123507875554.dkr.ecr.eu-north-1.amazonaws.com
           REPOSITORY: dokihealth-b2c
           IMAGE_TAG: latest
           
