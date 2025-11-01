@@ -7,6 +7,13 @@ terraform {
             version = ">= 5.0"
         }
     }
+backend "remote" {
+         
+          organization = "dokihealth"
+          workspaces {
+            name = "DokiHealth-infra"
+          }
+        }
 }
 
 provider "aws" {
