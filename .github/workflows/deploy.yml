@@ -6,7 +6,7 @@ on:
       - 'main'
 jobs:
   build:
-    name: Build Image
+    name: Build and Deploy to AWS ECR
     runs-on: ubuntu-latest
     env:
     
