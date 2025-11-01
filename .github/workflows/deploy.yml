@@ -41,7 +41,7 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{secrets.SUPABASE_SERVICE_ROLE_KEY}}
           
         run: |
-          docker compose -f docker-compose.yml build \
+          docker compose build \
             --build-arg NEXT_PUBLIC_SUPABASE_URL=${{secrets.NEXT_PUBLIC_SUPABASE_URL}} \
             --build-arg NEXT_PUBLIC_SUPABASE_ANON_KEY=${{secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY}}
 
