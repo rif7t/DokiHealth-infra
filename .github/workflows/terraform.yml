@@ -63,7 +63,7 @@ jobs:
     # Use the Bash shell regardless whether the GitHub Actions runner is ubuntu-latest, macos-latest, or windows-latest
     defaults:
       run:
-        shell: bash
+        working-directory: ./DokiHealth-infra/aws-infra
 
     steps:
     # Checkout the repository to the GitHub Actions runner
@@ -79,6 +79,7 @@ jobs:
     # Initialize a new or existing Terraform working directory by creating initial files, loading any remote state, downloading modules, etc.
     - name: Terraform Init
       run: terraform init -backend-config=envs/prod/backend.hcl
+      
 
      # Validate Terraform configuration files 
     - name: Terraform Validate
