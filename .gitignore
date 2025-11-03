@@ -59,3 +59,4 @@ terraform.tfvars
 .terraform/
 .terraformrc
 terraform.rc
+**/.terraform/*
