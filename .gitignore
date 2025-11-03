@@ -48,3 +48,14 @@ Thumbs.db
 # Docker
 docker-compose.override.yml
 .docker/
+
+# Terraform
+*.tfvars
+*.terraform
+terraform.tfvars
+**.terraform/*
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraformrc
+terraform.rc
