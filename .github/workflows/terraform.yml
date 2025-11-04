@@ -106,7 +106,7 @@ jobs:
       id: plan
       if: github.event_name == 'pull_request'
       run: |
-        terraform -chdir=aws-infra apply plan -no-color -input=false 
+        terraform  apply plan -no-color -input=false 
       continue-on-error: true
 
     - name: Comment Plan on PR
