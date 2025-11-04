@@ -63,7 +63,7 @@ jobs:
     # Use the Bash shell regardless whether the GitHub Actions runner is ubuntu-latest, macos-latest, or windows-latest
     defaults:
       run:
-        working-directory: aws-infra
+        working-directory: ./aws-infra
 
     steps:
     # Checkout the repository to the GitHub Actions runner
