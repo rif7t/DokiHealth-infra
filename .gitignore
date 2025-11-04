@@ -50,7 +50,7 @@ docker-compose.override.yml
 .docker/
 *.docker
 
-# Terraform.
+# Terraform
 *.tfvars
 *.terraform
 terraform.tfvars
