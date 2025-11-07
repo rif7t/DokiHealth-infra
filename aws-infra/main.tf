@@ -119,7 +119,6 @@ module "target-group" {
 
 module "ecs_cluster" {
     source = "./modules/ecs_cluster"
-
     name ="dh_ecs_cluster"
     dh_b2c_group_name = module.cloud-watch-log-group.name
 }
