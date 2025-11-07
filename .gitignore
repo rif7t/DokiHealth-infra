@@ -15,7 +15,7 @@ ios/Pods/
 android/.gradle/
 android/app/build/
 
-# Python (AI scripts, Whisper, etc.)
+# Python 
 __pycache__/
 *.pyc
 *.pyo
