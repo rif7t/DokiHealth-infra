@@ -102,11 +102,11 @@ jobs:
 
     # Generates an execution plan for Terraform and generate comment plan on PR
     - name: Terraform Plan
-      working-directory: ./aws-infra
+      working-directory: aws-infra
       id: plan
       if: github.event_name == 'pull_request'
       run: |
-        terraform  apply plan -no-color -input=false 
+        terraform plan -no-color -input=false -out=tfplan 
       continue-on-error: true
 
     - name: Comment Plan on PR
