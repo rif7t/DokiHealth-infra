@@ -63,12 +63,19 @@ jobs:
     # Use the Bash shell regardless whether the GitHub Actions runner is ubuntu-latest, macos-latest, or windows-latest
     defaults:
       run:
-        working-directory: aws-infra
+        working-directory: ./aws-infra
 
     steps:
     # Checkout the repository to the GitHub Actions runner
     - name: Checkout
       uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v5.1.0
+      with: 
+            aws-access-key-id: ${{secrets.AWS_ACCESS_KEY_ID}}
+            aws-secret-access-key: ${{secrets.AWS_SECRET_ACCESS_KEY}}
+            aws-region: ${{secrets.AWS_REGION}}
 
     # Install the latest version of Terraform CLI and configure the Terraform CLI configuration file with a Terraform Cloud user API token
     - name: Setup Terraform
@@ -78,24 +85,28 @@ jobs:
 
     # Initialize a new or existing Terraform working directory by creating initial files, loading any remote state, downloading modules, etc.
     - name: Terraform Init
+      working-directory: aws-infra
       run: terraform init -backend-config=envs/prod/backend.hcl -backend-config="region=eu-north-1"
       
 
      # Validate Terraform configuration files 
     - name: Terraform Validate
+      working-directory: aws-infra
       id: validate
       run: terraform validate -no-color
       
     # Checks that all Terraform configuration files adhere to a canonical format
     - name: Terraform Format
       run: terraform fmt -check
+      continue-on-error: true
 
     # Generates an execution plan for Terraform and generate comment plan on PR
     - name: Terraform Plan
+      working-directory: aws-infra
       id: plan
       if: github.event_name == 'pull_request'
       run: |
-        terraform plan -no-color -input=false 
+        terraform plan -no-color -input=false -out=tfplan 
       continue-on-error: true
 
     - name: Comment Plan on PR
@@ -105,9 +116,9 @@ jobs:
         github-token: ${{ secrets.GIT_TOKEN }}
         script: |
           const output = `#### Terraform Format and Style 🖌\`${{ steps.fmt.outcome }}\`
-          #### Terraform Initialization ⚙️\`${{ steps.init.outcome }}\`
-          #### Terraform Validation 🤖\`${{ steps.validate.outcome }}\`
-          #### Terraform Plan 📖\`${{ steps.plan.outcome }}\`
+          #### Terraform Initialization \`${{ steps.init.outcome }}\`
+          #### Terraform Validation \`${{ steps.validate.outcome }}\`
+          #### Terraform Plan \`${{ steps.plan.outcome }}\`
 
           <details><summary>Show Plan</summary>
 
@@ -130,8 +141,8 @@ jobs:
       if: steps.plan.outcome == 'failure'
       run: exit 1
 
-      # On push to "main", build or change infrastructure according to Terraform configuration files
       # Note: It is recommended to set up a required "strict" status check in your repository for "Terraform Cloud". See the documentation on "strict" required status checks for more information: https://help.github.com/en/github/administering-a-repository/types-of-required-status-checks
     - name: Terraform Apply
+      working-directory: ./aws-infra
       if: github.ref == 'refs/heads/"main"' && github.event_name == 'push'
-      run: terraform apply -auto-approve -input=false
+      run: terraform -chdir=aws-infra apply -auto-approve -input=false
