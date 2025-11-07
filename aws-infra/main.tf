@@ -109,7 +109,6 @@ module "private-route-table" {
 
 module "target-group" {
     source = "./modules/target-group"
-
     name = "dhtg"
     tg-port = 3000
     tg-type = "ip"
