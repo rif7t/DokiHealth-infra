@@ -171,7 +171,6 @@ module "services" {
 
 module "load-balancer" {
     source = "./modules/load-balancer"
-
     name = "lb-dh-b2c"
     is_internal = false
     load_balancer_type = "application"
